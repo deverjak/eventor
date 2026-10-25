@@ -6,6 +6,7 @@ namespace Eventor\Shared\UserInterface\Http\Problem;
 
 use Eventor\Shared\Domain\Exception\AsProblem;
 use Eventor\Shared\Domain\Exception\DomainException;
+use Eventor\Shared\Domain\Exception\ProvidesViolations;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Messenger\Exception\DelayedMessageHandlingException;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -89,8 +90,38 @@ final readonly class ProblemFactory
             $exception->getMessage(),
             $exception->context(),
             $exception->nextSteps(),
-            correlationId: $correlationId,
+            $this->violationsOf($exception),
+            $correlationId,
         );
+    }
+
+    /**
+     * Exceptions that implement ProvidesViolations list their offending fields. A foreign Contract exception that has
+     * the same `violations()` method but does not (yet) implement the interface is read the same way.
+     *
+     * @return list<array{path: string, message: string, code?: string}>
+     */
+    private function violationsOf(DomainException $exception): array
+    {
+        if ($exception instanceof ProvidesViolations) {
+            return $exception->violations();
+        }
+        if (!method_exists($exception, 'violations')) {
+            return [];
+        }
+
+        $violations = [];
+        foreach ((array) $exception->violations() as $violation) {
+            if (\is_array($violation) && \is_string($violation['path'] ?? null) && \is_string($violation['message'] ?? null)) {
+                $entry = ['path' => $violation['path'], 'message' => $violation['message']];
+                if (\is_string($violation['code'] ?? null)) {
+                    $entry['code'] = $violation['code'];
+                }
+                $violations[] = $entry;
+            }
+        }
+
+        return $violations;
     }
 
     private function unwrap(\Throwable $throwable): \Throwable

@@ -18,7 +18,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.capacity_released', version: 1)]
-#[PendingSubscribers('registration', 'catalog')]
+#[PendingSubscribers('catalog')]
 final readonly class CapacityReleased
 {
     /**

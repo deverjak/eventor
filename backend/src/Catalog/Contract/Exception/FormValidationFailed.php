@@ -7,13 +7,14 @@ namespace Eventor\Catalog\Contract\Exception;
 use Eventor\Catalog\Contract\FormViolation;
 use Eventor\Shared\Domain\Exception\AsProblem;
 use Eventor\Shared\Domain\Exception\DomainException;
+use Eventor\Shared\Domain\Exception\ProvidesViolations;
 
 /**
  * The answers do not satisfy the form (FRM-05, FRM-07). `violations()` lists every offending field so the UI can mark it.
- * ProblemFactory exposes the list as problem `violations` once it supports `violations()` (request in the W1 report).
+ * ProblemFactory exposes the list as the problem `violations` (ProvidesViolations).
  */
 #[AsProblem(code: 'form_invalid', status: 422)]
-final class FormValidationFailed extends DomainException
+final class FormValidationFailed extends DomainException implements ProvidesViolations
 {
     /**
      * @param list<FormViolation> $violations

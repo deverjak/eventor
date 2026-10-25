@@ -34,7 +34,7 @@ final class TenantIsolationTest extends HttpTestCase
 
             $methods = [] === $route->getMethods() ? ['GET'] : $route->getMethods();
             foreach ($methods as $method) {
-                $this->request($method, $this->urlFor($route->getPath(), 'iso-b'), 'GET' === $method ? null : []);
+                $this->request($method, $this->urlFor($route->getPath(), 'iso-b', $route->getRequirements()), 'GET' === $method ? null : []);
 
                 $body = $this->assertProblem(404, 'not_found');
                 self::assertSame(
@@ -93,10 +93,24 @@ final class TenantIsolationTest extends HttpTestCase
         self::assertSame('iso-a', $body['slug']);
     }
 
-    private function urlFor(string $path, string $orgSlug): string
+    /**
+     * @param array<mixed>          $requirements a placeholder restricted to plain alternatives (`open|close`) gets the
+     *                                            first one, a numeric one (`\d+`) gets 1
+     */
+    private function urlFor(string $path, string $orgSlug, array $requirements = []): string
     {
         $path = str_replace('{orgSlug}', $orgSlug, $path);
 
-        return (string) preg_replace_callback('/\{(\w+)\}/', static fn(array $m): string => str_ends_with(strtolower($m[1]), 'id') ? '0199a000-0000-7000-8000-000000000000' : 'x', $path);
+        return (string) preg_replace_callback('/\{(\w+)\}/', static function (array $m) use ($requirements): string {
+            $requirement = \is_string($requirements[$m[1]] ?? null) ? $requirements[$m[1]] : null;
+            if (null !== $requirement && 1 === preg_match('/^\w+(\|\w+)*$/', $requirement)) {
+                return explode('|', $requirement)[0];
+            }
+            if (null !== $requirement && 1 === preg_match('{^'.$requirement.'$}', '1')) {
+                return '1';
+            }
+
+            return str_ends_with(strtolower($m[1]), 'id') ? '0199a000-0000-7000-8000-000000000000' : 'x';
+        }, $path);
     }
 }

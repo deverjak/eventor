@@ -8,7 +8,6 @@ use Eventor\Registration\Contract\OrderAmountChangeReason;
 use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Eventor\Shared\Domain\Money;
 
 /**
@@ -18,7 +17,6 @@ use Eventor\Shared\Domain\Money;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.order_amount_changed', version: 1)]
-#[PendingSubscribers('payments')]
 final readonly class OrderAmountChanged
 {
     public function __construct(

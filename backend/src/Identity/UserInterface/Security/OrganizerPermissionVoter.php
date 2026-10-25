@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Eventor\Identity\UserInterface\Security;
 
+use Eventor\Identity\Application\Access\OrganizerPolicyProvider;
+use Eventor\Identity\Application\Access\PermissionMatrix;
 use Eventor\Identity\Contract\AccessPolicy;
+use Eventor\Identity\Contract\DevicePrincipal;
 use Eventor\Identity\Contract\OrganizerView;
 use Eventor\Identity\Contract\Permission;
 use Eventor\Shared\Application\Tenant\TenantContext;
@@ -14,8 +17,9 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
  * Role x permission decisions (chapter 08). The attribute is a `Permission` value; the subject is the current
- * `OrganizerView` (or nothing, meaning the active tenant). Event-level voters of other modules ask `AccessPolicy`
- * the same way.
+ * `OrganizerView` (or nothing, meaning the active tenant). A check-in device holds the check-in role of its own
+ * organizer, including the policy exception for cash. Event-level voters of other modules ask
+ * `AccessPolicy::isAllowedForEvent()`, which applies the membership event scope.
  *
  * @extends Voter<string, OrganizerView|null>
  */
@@ -24,6 +28,7 @@ final class OrganizerPermissionVoter extends Voter
     public function __construct(
         private readonly AccessPolicy $policy,
         private readonly TenantContext $tenant,
+        private readonly OrganizerPolicyProvider $policies,
     ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
@@ -39,6 +44,12 @@ final class OrganizerPermissionVoter extends Voter
             return false;
         }
 
-        return $this->policy->isAllowed(Permission::from($attribute), $organizer, $user->getUserIdentifier());
+        $permission = Permission::from($attribute);
+        if ($user instanceof DevicePrincipal) {
+            return $user->organizerId()->equals($organizer)
+                && PermissionMatrix::allowsDevice($permission, $this->policies->forOrganizer($organizer));
+        }
+
+        return $this->policy->isAllowed($permission, $organizer, $user->getUserIdentifier());
     }
 }

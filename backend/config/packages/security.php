@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Eventor\Identity\Infrastructure\Security\ApiAuthenticationEntryPoint;
+use Eventor\Identity\Infrastructure\Security\DeviceAuthenticationFailureHandler;
+use Eventor\Identity\Infrastructure\Security\DeviceRequestMatcher;
+use Eventor\Identity\Infrastructure\Security\DeviceTokenHandler;
 use Eventor\Identity\Infrastructure\Security\LoginFailureHandler;
 use Eventor\Identity\Infrastructure\Security\LoginSuccessHandler;
 use Eventor\Identity\Infrastructure\Security\SecurityUser;
@@ -22,6 +25,23 @@ return App::config([
             'identity_users' => ['id' => SecurityUserProvider::class],
         ],
         'firewalls' => [
+            // Pairrot webhooks (API-02, Payments): stateless, authenticated by the HMAC signature of the raw body.
+            'webhooks' => [
+                'pattern' => '^/api/webhooks',
+                'stateless' => true,
+                'provider' => 'identity_users',
+                'custom_authenticators' => [\Eventor\Payments\UserInterface\Security\PairrotSignatureAuthenticator::class],
+            ],
+            // Check-in devices (ADR 006): `Authorization: Bearer dev1_...` on /api/check-in, stateless. A request to the
+            // same path without a device token (a signed-in team member) falls through to `team` and its session.
+            'check_in' => [
+                'request_matcher' => DeviceRequestMatcher::class,
+                'stateless' => true,
+                'access_token' => [
+                    'token_handler' => DeviceTokenHandler::class,
+                    'failure_handler' => DeviceAuthenticationFailureHandler::class,
+                ],
+            ],
             'team' => [
                 'pattern' => '^/api',
                 'lazy' => true,
@@ -40,8 +60,9 @@ return App::config([
             ],
         ],
         'access_control' => [
-            ['path' => '^/api/(auth/(login|logout)|health|doc)', 'roles' => 'PUBLIC_ACCESS'],
+            ['path' => '^/api/(auth/(login|logout|sign-up|invitations/(preview|accept))|health|doc)', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/api/(admin|auth)', 'roles' => 'ROLE_USER'],
+            ['path' => '^/api/check-in', 'roles' => ['ROLE_USER', 'ROLE_DEVICE']],
         ],
     ],
     'when@test' => [

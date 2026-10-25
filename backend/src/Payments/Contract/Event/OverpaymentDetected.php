@@ -17,7 +17,7 @@ use Eventor\Shared\Domain\Money;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'payments.overpayment_detected', version: 1)]
-#[PendingSubscribers('attention', 'payments')]
+#[PendingSubscribers('attention')]
 final readonly class OverpaymentDetected
 {
     public function __construct(

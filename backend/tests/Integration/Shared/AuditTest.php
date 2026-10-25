@@ -29,7 +29,7 @@ final class AuditTest extends IntegrationTestCase
         $membership = $this->service(AuditTrail::class)->forEntity(OrganizerId::fromString($ids['organizerId']), 'membership', $ids['membershipId']);
         self::assertCount(1, $membership);
         self::assertSame($trail[0]->correlationId, $membership[0]->correlationId, 'one command, one correlation id');
-        self::assertEquals(['userAccountId' => $ids['userAccountId'], 'role' => 'OWNER'], $membership[0]->after);
+        self::assertEquals(['userAccountId' => $ids['userAccountId'], 'role' => 'OWNER', 'eventScope' => []], $membership[0]->after);
     }
 
     public function test_the_audit_entry_of_an_organizer_never_contains_personal_data(): void

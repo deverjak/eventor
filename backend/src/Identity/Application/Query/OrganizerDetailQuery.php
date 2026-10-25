@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Identity\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Identity\Application\Query\View\OrganizerDetailView;
 use Eventor\Shared\Domain\Id\OrganizerId;
 
 /**
@@ -15,7 +16,7 @@ final readonly class OrganizerDetailQuery
 {
     public function __construct(private Connection $connection) {}
 
-    public function get(OrganizerId $organizer, string $role): OrganizerDetail
+    public function get(OrganizerId $organizer, string $role): OrganizerDetailView
     {
         /** @var array{id: string, slug: string, name: string, created_at: string, members: int|string}|false $row */
         $row = $this->connection->fetchAssociative(
@@ -29,7 +30,7 @@ final readonly class OrganizerDetailQuery
             throw new \LogicException('Organizer vanished during the request.');
         }
 
-        return new OrganizerDetail(
+        return new OrganizerDetailView(
             $row['id'],
             $row['slug'],
             $row['name'],

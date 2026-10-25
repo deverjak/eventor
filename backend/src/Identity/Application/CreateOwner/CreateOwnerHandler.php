@@ -11,6 +11,8 @@ use Eventor\Identity\Domain\Membership\Membership;
 use Eventor\Identity\Domain\Membership\MembershipRepository;
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Identity\Domain\Organizer\Organizer;
+use Eventor\Identity\Domain\Organizer\OrganizerPolicy;
+use Eventor\Identity\Domain\Organizer\OrganizerPolicyRepository;
 use Eventor\Identity\Domain\Organizer\OrganizerRepository;
 use Eventor\Identity\Domain\Organizer\SlugAlreadyTaken;
 use Eventor\Shared\Domain\Id\MembershipId;
@@ -25,6 +27,7 @@ final readonly class CreateOwnerHandler
     public function __construct(
         private UserAccountRepository $accounts,
         private OrganizerRepository $organizers,
+        private OrganizerPolicyRepository $policies,
         private MembershipRepository $memberships,
         private PasswordHasher $hasher,
         private ClockInterface $clock,
@@ -53,8 +56,9 @@ final readonly class CreateOwnerHandler
             $this->accounts->add($account);
         }
 
-        $organizer = Organizer::register(OrganizerId::generate(), $command->slug, $command->organizerName, $now);
+        $organizer = Organizer::register(OrganizerId::generate(), $command->slug, $command->organizerName, $now, $account->email());
         $this->organizers->add($organizer);
+        $this->policies->add(OrganizerPolicy::defaultsFor($organizer->id()));
 
         $membership = Membership::grant(MembershipId::generate(), $account->id(), $organizer->id(), Role::Owner, $now);
         $this->memberships->add($membership);

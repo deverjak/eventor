@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Eventor\Identity\Application\Access;
 
 /**
- * Organizer-configurable exceptions to the permission matrix (`organizer_policy`, chapter 03). In P0 phase F0 the
- * table does not exist yet, so every flag is off; the Identity agent of phase F1 loads the real policy.
+ * Organizer-configurable exceptions to the permission matrix (`organizer_policy`, chapter 03), as the voters read
+ * them. Loaded by `OrganizerPolicyProvider`; an organizer without a policy row gets the defaults (every flag off).
  */
 final readonly class OrganizerPolicy
 {

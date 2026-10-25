@@ -49,6 +49,6 @@ final class IdentityDomainTest extends TestCase
         self::assertTrue($organizerId->equals($membership->organizerId()));
         $events = $membership->releaseEvents();
         self::assertInstanceOf(MembershipGranted::class, $events[0]);
-        self::assertSame(['userAccountId' => $membership->userAccountId()->toString(), 'role' => 'FINANCE'], $events[0]->auditChange()->after);
+        self::assertSame(['userAccountId' => $membership->userAccountId()->toString(), 'role' => 'FINANCE', 'eventScope' => []], $events[0]->auditChange()->after);
     }
 }

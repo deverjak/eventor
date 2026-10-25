@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Eventor\Identity\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Identity\Application\Query\View\AccountProfileView;
+use Eventor\Identity\Application\Query\View\OrganizerMembershipView;
 
 final readonly class AccountProfileQuery
 {
     public function __construct(private Connection $connection) {}
 
-    public function forUser(string $userIdentifier): ?AccountProfile
+    public function forUser(string $userIdentifier): ?AccountProfileView
     {
         /** @var array{id: string, email: string, display_name: string}|false $account */
         $account = $this->connection->fetchAssociative(
@@ -31,7 +33,7 @@ final readonly class AccountProfileQuery
             ['account' => $account['id']],
         );
 
-        return new AccountProfile(
+        return new AccountProfileView(
             $account['id'],
             $account['email'],
             $account['display_name'],

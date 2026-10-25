@@ -14,6 +14,11 @@ use Eventor\Shared\Domain\Id\InvitationId;
 #[AsProblem(code: 'invitation_not_found', status: 404)]
 final class InvitationNotFound extends DomainException
 {
+    public static function forToken(): self
+    {
+        return new self('The invitation was not found, has expired or was already used.');
+    }
+
     public static function forId(InvitationId $id): self
     {
         return new self(\sprintf('Invitation "%s" was not found.', $id->toString()));

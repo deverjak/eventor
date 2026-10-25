@@ -110,6 +110,23 @@ final class PermissionMatrix
     }
 
     /**
+     * A check-in device acts with the rights of the check-in role (ADR 006), policy exceptions included.
+     */
+    public static function allowsDevice(Permission $permission, OrganizerPolicy $policy): bool
+    {
+        return self::allows(Role::CheckIn, $permission, $policy);
+    }
+
+    /**
+     * True when the role holds the permission only if the organizer policy switches it on (so the policy is worth loading).
+     */
+    public static function dependsOnPolicy(Role $role, Permission $permission): bool
+    {
+        return !\in_array($permission, self::MATRIX[$role->value] ?? [], true)
+            && isset(self::CONDITIONAL[$role->value][$permission->value]);
+    }
+
+    /**
      * @return list<Permission>
      */
     public static function granted(Role $role): array

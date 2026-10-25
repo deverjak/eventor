@@ -36,7 +36,7 @@ final class ProblemFactoryViolationsTest extends TestCase
         self::assertSame(['violationCount' => 2], $problem->context);
     }
 
-    public function test_an_exception_of_another_module_with_the_same_method_is_read_too(): void
+    public function test_legal_requirement_not_satisfied_lists_the_missing_confirmations(): void
     {
         $problem = $this->factory()->fromThrowable(new RequirementNotSatisfied([LegalRequirementId::generate()]), null);
 

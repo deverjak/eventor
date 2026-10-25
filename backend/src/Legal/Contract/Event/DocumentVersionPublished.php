@@ -19,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'legal.document_version_published', version: 1)]
-#[PendingSubscribers('legal', 'communication')]
+#[PendingSubscribers('communication')]
 final readonly class DocumentVersionPublished
 {
     public function __construct(

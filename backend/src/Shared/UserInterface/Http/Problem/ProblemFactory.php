@@ -96,32 +96,13 @@ final readonly class ProblemFactory
     }
 
     /**
-     * Exceptions that implement ProvidesViolations list their offending fields. A foreign Contract exception that has
-     * the same `violations()` method but does not (yet) implement the interface is read the same way.
+     * Exceptions that implement ProvidesViolations list their offending fields.
      *
      * @return list<array{path: string, message: string, code?: string}>
      */
     private function violationsOf(DomainException $exception): array
     {
-        if ($exception instanceof ProvidesViolations) {
-            return $exception->violations();
-        }
-        if (!method_exists($exception, 'violations')) {
-            return [];
-        }
-
-        $violations = [];
-        foreach ((array) $exception->violations() as $violation) {
-            if (\is_array($violation) && \is_string($violation['path'] ?? null) && \is_string($violation['message'] ?? null)) {
-                $entry = ['path' => $violation['path'], 'message' => $violation['message']];
-                if (\is_string($violation['code'] ?? null)) {
-                    $entry['code'] = $violation['code'];
-                }
-                $violations[] = $entry;
-            }
-        }
-
-        return $violations;
+        return $exception instanceof ProvidesViolations ? $exception->violations() : [];
     }
 
     private function unwrap(\Throwable $throwable): \Throwable

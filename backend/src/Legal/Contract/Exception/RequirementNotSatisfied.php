@@ -6,13 +6,14 @@ namespace Eventor\Legal\Contract\Exception;
 
 use Eventor\Shared\Domain\Exception\AsProblem;
 use Eventor\Shared\Domain\Exception\DomainException;
+use Eventor\Shared\Domain\Exception\ProvidesViolations;
 use Eventor\Shared\Domain\Id\LegalRequirementId;
 
 /**
  * A mandatory legal requirement has no granted decision (chapter 04, path 2, step 4). `violations()` names the requirements.
  */
 #[AsProblem(code: 'missing_confirmation', status: 422)]
-final class RequirementNotSatisfied extends DomainException
+final class RequirementNotSatisfied extends DomainException implements ProvidesViolations
 {
     /**
      * @param list<LegalRequirementId> $missing

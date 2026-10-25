@@ -8,7 +8,7 @@ use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
 use Eventor\Identity\Contract\Permission;
-use Eventor\Payments\Application\Query\PaymentsAdminQuery;
+use Eventor\Payments\Application\Query\OrderFinanceDetailQuery;
 use Eventor\Shared\Domain\Id\OrderId;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,7 +24,7 @@ final class OrderFinanceController extends AbstractController
 {
     use ParsesRouteIds;
 
-    public function __construct(private readonly PaymentsAdminQuery $query) {}
+    public function __construct(private readonly OrderFinanceDetailQuery $query) {}
 
     #[Route('/api/admin/org/{orgSlug}/orders/{orderId}/finance', name: 'api_admin_payments_order_finance', methods: ['GET'])]
     #[RequiresPermission(Permission::ParticipantsViewFull)]
@@ -44,6 +44,6 @@ final class OrderFinanceController extends AbstractController
     )]
     public function __invoke(#[CurrentOrganizer] OrganizerView $organizer, string $orderId): JsonResponse
     {
-        return $this->json($this->query->orderFinance($organizer->id, $this->routeId($orderId, OrderId::class)));
+        return $this->json($this->query->detail($organizer->id, $this->routeId($orderId, OrderId::class)));
     }
 }

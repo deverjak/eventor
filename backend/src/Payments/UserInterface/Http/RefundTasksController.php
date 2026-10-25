@@ -8,7 +8,7 @@ use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
 use Eventor\Identity\Contract\Permission;
-use Eventor\Payments\Application\Query\PaymentsAdminQuery;
+use Eventor\Payments\Application\Query\RefundTaskQuery;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final class RefundTasksController extends AbstractController
 {
-    public function __construct(private readonly PaymentsAdminQuery $query) {}
+    public function __construct(private readonly RefundTaskQuery $query) {}
 
     #[Route('/api/admin/org/{orgSlug}/refund-tasks', name: 'api_admin_payments_refund_tasks', methods: ['GET'])]
     #[RequiresPermission(Permission::RefundCreate)]
@@ -48,6 +48,6 @@ final class RefundTasksController extends AbstractController
             throw new \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException('status must be open, settled or cancelled.');
         }
 
-        return $this->json(['items' => $this->query->refundTasks($organizer->id, \is_string($status) ? $status : null)]);
+        return $this->json(['items' => $this->query->list($organizer->id, \in_array($status, ['open', 'settled', 'cancelled'], true) ? $status : null)]);
     }
 }

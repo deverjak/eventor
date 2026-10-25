@@ -26,7 +26,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * so an order of another organizer is "not found" (ADR 005).
  */
 #[AsAlias(FinanceQuery::class)]
-final readonly class DbalFinanceQuery implements FinanceQuery
+final readonly class OrderFinanceQuery implements FinanceQuery
 {
     public function __construct(private Connection $connection) {}
 

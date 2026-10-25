@@ -8,7 +8,7 @@ use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
 use Eventor\Identity\Contract\Permission;
-use Eventor\Payments\Application\Query\PaymentsAdminQuery;
+use Eventor\Payments\Application\Query\PairrotConnectionQuery;
 use Eventor\Payments\Contract\Exception\PairrotUnavailable;
 use Eventor\Payments\Contract\PairrotOnboarding;
 use OpenApi\Attributes as OA;
@@ -25,7 +25,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class PairrotConnectionController extends AbstractController
 {
     public function __construct(
-        private readonly PaymentsAdminQuery $query,
+        private readonly PairrotConnectionQuery $query,
         private readonly PairrotOnboarding $onboarding,
     ) {}
 
@@ -44,24 +44,28 @@ final class PairrotConnectionController extends AbstractController
     )]
     public function __invoke(#[CurrentOrganizer] OrganizerView $organizer): JsonResponse
     {
-        $connection = $this->query->connection($organizer->id);
-        if (null === $connection || null === $connection['bankConnectionId']) {
-            return $this->json(['connected' => false, 'subtenantId' => $connection['subtenantId'] ?? null, 'bankConnectionId' => null, 'maskedIban' => null, 'inboundAddress' => null, 'receptionState' => 'not_configured', 'pairrotReachable' => null]);
+        $connection = $this->query->forOrganizer($organizer->id);
+        if (null === $connection || null === $connection->bankConnectionId) {
+            return $this->json(['connected' => false, 'subtenantId' => $connection?->subtenantId, 'bankConnectionId' => null, 'maskedIban' => null, 'inboundAddress' => null, 'receptionState' => 'not_configured', 'pairrotReachable' => null]);
         }
 
         $reception = null;
         $reachable = true;
         try {
-            $reception = $this->onboarding->receptionState($organizer->id, self::str($connection['subtenantId']), self::str($connection['bankConnectionId']))->value;
+            $reception = $this->onboarding->receptionState($organizer->id, $connection->subtenantId, $connection->bankConnectionId)->value;
         } catch (PairrotUnavailable) {
             $reachable = false;
         }
 
-        return $this->json(['connected' => true, ...$connection, 'receptionState' => $reception, 'pairrotReachable' => $reachable]);
-    }
-
-    private static function str(mixed $value): string
-    {
-        return \is_string($value) ? $value : '';
+        return $this->json([
+            'connected' => true,
+            'subtenantId' => $connection->subtenantId,
+            'bankConnectionId' => $connection->bankConnectionId,
+            'maskedIban' => $connection->maskedIban,
+            'inboundAddress' => $connection->inboundAddress,
+            'updatedAt' => $connection->updatedAt,
+            'receptionState' => $reception,
+            'pairrotReachable' => $reachable,
+        ]);
     }
 }

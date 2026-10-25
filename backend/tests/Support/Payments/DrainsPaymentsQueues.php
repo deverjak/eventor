@@ -58,7 +58,8 @@ trait DrainsPaymentsQueues
             $handled += $result->handled;
             $failed += $result->failed;
             $before = $handled + $failed;
-            \Symfony\Component\Clock\Clock::get()->sleep(13 * 3600);
+            // 12 h retry delay +10 % jitter = 13.2 h: jump 14 h so the last retry is always due (13 h made this test flaky).
+            \Symfony\Component\Clock\Clock::get()->sleep(14 * 3600);
             $again = $this->drainQueues();
             $handled += $again->handled;
             $failed += $again->failed;

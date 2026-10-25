@@ -8,7 +8,7 @@ use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
 use Eventor\Identity\Contract\Permission;
-use Eventor\Payments\Application\Query\PaymentsAdminQuery;
+use Eventor\Payments\Application\Query\ReconciliationQuery;
 use Eventor\Shared\Domain\Id\BankTransactionId;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,7 +25,7 @@ final class UnmatchedTransactionsController extends AbstractController
 {
     use ParsesRouteIds;
 
-    public function __construct(private readonly PaymentsAdminQuery $query) {}
+    public function __construct(private readonly ReconciliationQuery $query) {}
 
     #[Route('/api/admin/org/{orgSlug}/unmatched-transactions', name: 'api_admin_payments_unmatched_transactions', methods: ['GET'])]
     #[RequiresPermission(Permission::PaymentExceptionAssign)]
@@ -45,7 +45,7 @@ final class UnmatchedTransactionsController extends AbstractController
     )]
     public function list(#[CurrentOrganizer] OrganizerView $organizer, Request $request): JsonResponse
     {
-        return $this->json(['items' => $this->query->unmatchedTransactions($organizer->id, 'all' !== $request->query->get('state'))]);
+        return $this->json(['items' => $this->query->unmatched($organizer->id, 'all' !== $request->query->get('state'))]);
     }
 
     #[Route('/api/admin/org/{orgSlug}/unmatched-transactions/{transactionId}/candidates', name: 'api_admin_payments_unmatched_candidates', methods: ['GET'])]

@@ -28,7 +28,7 @@ final readonly class PublicAvailabilityQuery
      */
     public function forSlug(OrganizerId $organizer, string $eventSlug): PublicAvailabilityView
     {
-        $event = $this->catalog->resolvePublishedSlug($organizer, $eventSlug);
+        $event = $this->catalog->resolveRegistrableSlug($organizer, $eventSlug);
         if (null === $this->availability) {
             return new PublicAvailabilityView($event->toString(), false, null, [], []);
         }

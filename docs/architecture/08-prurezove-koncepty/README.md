@@ -4,7 +4,7 @@
 
 > **Stav W0–W2 (25. 10. 2026).** Problem details serializují `nextSteps` jako seznam. Money má API tvar `{minor, currency, formatted}`. CSRF vyžaduje same-origin `Origin` a hlavičku `csrf-token` s libovolnou hodnotou délky nejméně 24. `TenantContext` je v `Shared\Application`. Pozvánkový token je HMAC-odvozený a v databázi se drží jen jeho SHA-256; `acceptToken` se vrací jen v dev/test.
 
-Samoobslužný odkaz vytváří `SelfServiceLinks::urlFor()` z odvoditelného tokenu. Kontrola scope události je databázová (`AccessPolicy::isAllowedForEvent` / `eventScope`); opakované odvolání pozvánky vrací 404. Sign-up i pozvánky sdílejí v produkci limit 20/h.
+Samoobslužný odkaz vytváří `SelfServiceLinks::urlFor()` z odvoditelného tokenu. Kontrola scope události je databázová (`AccessPolicy::isAllowedForEvent` / `eventScope`) a vynucuje ji centrálně `RequiresPermissionListener`: routa s `{eventId}` se posuzuje pro tu akci, routa bez kontextu akce je členovi omezenému na akce odepřena, pokud nedeklaruje `scopedAllowed`; opakované odvolání pozvánky vrací 404. Sign-up i pozvánky sdílejí v produkci limit 20/h.
 
 ## Co si odnést
 

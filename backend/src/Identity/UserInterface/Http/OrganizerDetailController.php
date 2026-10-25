@@ -31,7 +31,7 @@ final class OrganizerDetailController extends AbstractController
     ) {}
 
     #[Route('/api/admin/org/{orgSlug}', name: 'api_admin_organizer_detail', methods: ['GET'])]
-    #[RequiresPermission(Permission::OrganizerView)]
+    #[RequiresPermission(Permission::OrganizerView, scopedAllowed: true)]
     #[OA\Get(
         summary: 'Detail of the organizer the signed-in member belongs to',
         tags: ['organizer'],

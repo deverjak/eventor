@@ -190,7 +190,7 @@ final readonly class PublicEventPageQuery
      */
     public function formOf(OrganizerId $organizer, string $eventSlug): PublicFormView
     {
-        return $this->form($organizer, $this->catalog->resolvePublishedSlug($organizer, $eventSlug));
+        return $this->form($organizer, $this->catalog->resolveRegistrableSlug($organizer, $eventSlug));
     }
 
     private function form(OrganizerId $organizer, EventId $event): PublicFormView

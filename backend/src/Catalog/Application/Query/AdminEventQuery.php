@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Eventor\Catalog\Application\Query;
 
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Eventor\Catalog\Application\Presenter\Hydrate;
 use Eventor\Catalog\Application\Query\View\ActivityDetailView;
@@ -29,12 +30,18 @@ final readonly class AdminEventQuery
 {
     public function __construct(private Connection $connection) {}
 
-    public function list(OrganizerId $organizer): EventListView
+    /**
+     * @param list<EventId> $scope the events of an event-scoped membership; empty = all events of the organizer
+     */
+    public function list(OrganizerId $organizer, array $scope = []): EventListView
     {
+        $ids = array_map(static fn(EventId $event): string => $event->toString(), $scope);
         $rows = $this->connection->fetchAllAssociative(
             'SELECT id, slug, name, short_description, starts_at, ends_at, visibility, publication_state, registration_state, version
-               FROM catalog.event WHERE organizer_id = :organizer ORDER BY starts_at DESC, created_at DESC',
-            ['organizer' => $organizer->toString()],
+               FROM catalog.event WHERE organizer_id = :organizer'.([] === $ids ? '' : ' AND id IN (:ids)').'
+              ORDER BY starts_at DESC, created_at DESC',
+            ['organizer' => $organizer->toString(), 'ids' => $ids],
+            ['ids' => ArrayParameterType::STRING],
         );
 
         return new EventListView(array_map(static fn(array $row): EventListItemView => new EventListItemView(

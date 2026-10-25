@@ -11,6 +11,7 @@ use Eventor\Catalog\Application\Event\EventDetailsInput;
 use Eventor\Catalog\Application\Event\PaymentRulesInput;
 use Eventor\Catalog\Application\Event\UpdateEvent;
 use Eventor\Catalog\Application\Query\AdminEventQuery;
+use Eventor\Identity\Contract\AccessPolicy;
 use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
@@ -36,6 +37,7 @@ final class EventController extends AbstractController
     public function __construct(
         private readonly CommandBus $commands,
         private readonly AdminEventQuery $events,
+        private readonly AccessPolicy $access,
     ) {}
 
     #[Route('/api/admin/org/{orgSlug}/events', name: 'api_admin_event_create', methods: ['POST'])]
@@ -59,7 +61,7 @@ final class EventController extends AbstractController
     }
 
     #[Route('/api/admin/org/{orgSlug}/events', name: 'api_admin_event_list', methods: ['GET'])]
-    #[RequiresPermission(Permission::OrganizerView)]
+    #[RequiresPermission(Permission::OrganizerView, scopedAllowed: true)]
     #[OA\Get(
         summary: 'Events of the organizer, newest first',
         tags: ['events'],
@@ -72,7 +74,11 @@ final class EventController extends AbstractController
     )]
     public function list(#[CurrentOrganizer] OrganizerView $organizer): JsonResponse
     {
-        return $this->json($this->events->list($organizer->id));
+        // A member restricted to some events (ORG-03) sees only those.
+        $user = $this->getUser();
+        $scope = null === $user ? [] : $this->access->eventScope($organizer->id, $user->getUserIdentifier());
+
+        return $this->json($this->events->list($organizer->id, $scope));
     }
 
     #[Route('/api/admin/org/{orgSlug}/events/{eventId}', name: 'api_admin_event_detail', methods: ['GET'], requirements: ['eventId' => Requirement::UUID])]

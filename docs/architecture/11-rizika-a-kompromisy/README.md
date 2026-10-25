@@ -141,3 +141,6 @@ Platí stav ověřený ve zdrojovém kódu 25. 10. 2026; „důvod“ popisuje i
 | W2 Audit/Attention | všechny typy existují | chybějící se mapují na nejbližší typ a payload má `source` | postupná implementace typů |
 | W2 Audit/Attention | akce měnící cizí modul jsou commandy | zatím jsou odkazy | zachování hranic modulů |
 | W2 Audit/Attention | per-entity audit bez view/voteru | endpoint deklaruje `OrganizerView`, přístup ověřuje voter | typovaný pohled a autorizace |
+| W2 (review) | scope členství na akce se kontroluje u každé akce | `RequiresPermissionListener` hlasuje nad `{eventId}` z routy (`EventPermissionSubject`); routa bez kontextu akce je členovi omezenému na akce odepřena, pokud nedeklaruje `scopedAllowed` (seznam akcí se mu filtruje) | jedno místo pro všechny moduly; generický `EventScopeTest` hlídá každou admin GET routu |
+| W2 (review) | — | idempotenční záznam `in_progress` se po 24 h TTL smí převzít | přijaté riziko: požadavek nemůže běžet 24 h (limity PHP/FrankenPHP); trvalé zamčení klíče po pádu procesu by bylo horší |
+| W2 (review) | veřejná stránka každé nekoncepční akce | detail jen pro `published`, `completed`, `cancelled`; formulář a dostupnost jen pro `published`; archiv je samostatná projekce (POST-07) | zrušení musí zůstat vidět účastníkům, osobní a provozní data archivu ne |

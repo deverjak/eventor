@@ -43,11 +43,37 @@ final readonly class EventCatalogQuery implements EventCatalog
         private PublishedFormQuery $forms,
     ) {}
 
+    /**
+     * A public event page exists for a published, completed or cancelled event (the cancellation must stay visible to
+     * participants holding the link). Drafts and archived events are "not found": the public archive is a separate,
+     * curated projection (POST-07).
+     */
     public function resolvePublishedSlug(OrganizerId $organizer, string $eventSlug): EventId
     {
+        return $this->resolveSlugIn($organizer, $eventSlug, ['published', 'completed', 'cancelled']);
+    }
+
+    /**
+     * The form and the availability are public only while the event is published.
+     *
+     * @throws EventNotFound
+     */
+    public function resolveRegistrableSlug(OrganizerId $organizer, string $eventSlug): EventId
+    {
+        return $this->resolveSlugIn($organizer, $eventSlug, ['published']);
+    }
+
+    /**
+     * @param list<string> $states
+     *
+     * @throws EventNotFound
+     */
+    private function resolveSlugIn(OrganizerId $organizer, string $eventSlug, array $states): EventId
+    {
         $id = $this->connection->fetchOne(
-            "SELECT id FROM catalog.event WHERE organizer_id = :organizer AND slug = :slug AND publication_state <> 'draft'",
-            ['organizer' => $organizer->toString(), 'slug' => $eventSlug],
+            'SELECT id FROM catalog.event WHERE organizer_id = :organizer AND slug = :slug AND publication_state IN (:states)',
+            ['organizer' => $organizer->toString(), 'slug' => $eventSlug, 'states' => $states],
+            ['states' => ArrayParameterType::STRING],
         );
         if (!\is_string($id)) {
             throw EventNotFound::forSlug($eventSlug);

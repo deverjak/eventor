@@ -128,7 +128,7 @@ final class FormController extends AbstractController
     }
 
     #[Route('/api/admin/org/{orgSlug}/form-field-types', name: 'api_admin_form_field_types', methods: ['GET'])]
-    #[RequiresPermission(Permission::OrganizerView)]
+    #[RequiresPermission(Permission::OrganizerView, scopedAllowed: true)]
     #[OA\Get(
         summary: 'Field types the editor offers, with their constraints and semantic fields',
         tags: ['form'],

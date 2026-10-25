@@ -6,6 +6,7 @@ namespace Eventor\Payments\Application\Refund;
 
 use Eventor\Payments\Application\Finance\LedgerBook;
 use Eventor\Payments\Contract\RefundReason;
+use Eventor\Payments\Domain\Refund\RefundExceedsBalance;
 use Eventor\Payments\Domain\Refund\RefundTask;
 use Eventor\Payments\Domain\Refund\RefundTaskException;
 use Eventor\Payments\Domain\Refund\RefundTaskRepository;
@@ -40,10 +41,15 @@ final readonly class OpenRefundTaskHandler
             throw RefundTaskException::alreadyOpen();
         }
 
+        $amount = Money::of($command->amountMinor, $finance->currency());
+        if ($amount->greaterThan($finance->refundable())) {
+            throw RefundExceedsBalance::of($amount, $finance->refundable());
+        }
+
         $task = RefundTask::open(
             $organizer,
             $order,
-            Money::of($command->amountMinor, $finance->currency()),
+            $amount,
             RefundReason::from($command->reason),
             $command->note,
             $this->audit->actor() ?? AuditActor::system('payments'),

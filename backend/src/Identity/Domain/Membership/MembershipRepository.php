@@ -21,5 +21,9 @@ interface MembershipRepository
 
     public function exists(UserAccountId $account, OrganizerId $organizer): bool;
 
-    public function countOwners(OrganizerId $organizer): int;
+    /**
+     * Locks the owner memberships of the organizer (until the end of the transaction) and counts them, so two
+     * concurrent demotions or removals cannot both see "another owner is left".
+     */
+    public function lockAndCountOwners(OrganizerId $organizer): int;
 }

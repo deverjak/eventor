@@ -6,6 +6,7 @@ namespace Eventor\Payments\Application\Refund;
 
 use Eventor\Payments\Application\Finance\LedgerBook;
 use Eventor\Payments\Domain\Ledger\LedgerEntry;
+use Eventor\Payments\Domain\Refund\RefundExceedsBalance;
 use Eventor\Payments\Domain\Refund\RefundTaskException;
 use Eventor\Payments\Domain\Refund\RefundTaskNotFound;
 use Eventor\Payments\Domain\Refund\RefundTaskRepository;
@@ -43,6 +44,10 @@ final readonly class SettleRefundTaskHandler
         }
 
         $finance = $this->book->lock($organizer, $task->orderId());
+        // Revocations or other refunds since the task was opened may have shrunk the balance.
+        if ($task->amount()->greaterThan($finance->refundable())) {
+            throw RefundExceedsBalance::of($task->amount(), $finance->refundable());
+        }
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $actor = $this->audit->actor() ?? AuditActor::system('payments');
 

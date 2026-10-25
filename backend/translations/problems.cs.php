@@ -82,4 +82,5 @@ return [
     'problem.refund_task_not_open.title' => 'Úkol k vrácení peněz už je uzavřený',
     'problem.unmatched_transaction_not_found.title' => 'Nespárovaná platba nenalezena',
     'problem.allocation_not_possible.title' => 'Platbu nelze přiřadit',
+    'problem.refund_exceeds_balance.title' => 'Částka převyšuje, co lze vrátit',
 ];

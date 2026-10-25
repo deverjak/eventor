@@ -50,13 +50,15 @@ final readonly class DoctrineMembershipRepository implements MembershipRepositor
         );
     }
 
-    public function countOwners(OrganizerId $organizer): int
+    public function lockAndCountOwners(OrganizerId $organizer): int
     {
-        $count = $this->connection->fetchOne(
-            "SELECT count(*) FROM identity.membership WHERE organizer_id = :organizer AND role = 'OWNER'",
+        // FOR UPDATE cannot be combined with count(*): lock the rows, count them in PHP. A transaction waiting on the
+        // lock re-evaluates the WHERE clause after the first one commits, so a demoted or removed owner drops out.
+        $owners = $this->connection->fetchFirstColumn(
+            "SELECT id FROM identity.membership WHERE organizer_id = :organizer AND role = 'OWNER' FOR UPDATE",
             ['organizer' => $organizer->toString()],
         );
 
-        return is_numeric($count) ? (int) $count : 0;
+        return \count($owners);
     }
 }

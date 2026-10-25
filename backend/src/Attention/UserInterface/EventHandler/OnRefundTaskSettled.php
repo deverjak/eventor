@@ -19,6 +19,6 @@ final readonly class OnRefundTaskSettled
 
     public function __invoke(RefundTaskSettled $event): void
     {
-        $this->attention->close(AttentionType::RefundTask, 'refund_task', $event->refundTaskId->toString());
+        $this->attention->close(AttentionType::RefundTask, $event->organizerId, 'refund_task', $event->refundTaskId->toString());
     }
 }

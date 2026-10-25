@@ -19,7 +19,7 @@ final readonly class RemoveMemberHandler
     {
         $membership = $this->memberships->find($command->membershipId, $command->organizerId) ?? throw MembershipNotFound::forId($command->membershipId);
 
-        if (Role::Owner === $membership->role() && $this->memberships->countOwners($command->organizerId) <= 1) {
+        if (Role::Owner === $membership->role() && $this->memberships->lockAndCountOwners($command->organizerId) <= 1) {
             throw LastOwnerRequired::create();
         }
 

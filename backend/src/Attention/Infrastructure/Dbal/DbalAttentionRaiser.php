@@ -31,7 +31,7 @@ final readonly class DbalAttentionRaiser implements AttentionRaiser
                 (id, organizer_id, type, dedupe_key, subject_type, subject_id, state, payload, created_at)
              VALUES
                 (:id, :organizer, :type, :dedupe, :subject_type, :subject_id, \'open\', CAST(:payload AS jsonb), :created_at)
-             ON CONFLICT (dedupe_key) WHERE state IN (\'open\', \'acknowledged\') DO NOTHING',
+             ON CONFLICT ((coalesce(organizer_id::text, \'\')), dedupe_key) WHERE state IN (\'open\', \'acknowledged\') DO NOTHING',
             [
                 'id' => Uuid::v7()->toRfc4122(),
                 'organizer' => $request->organizerId?->toString(),

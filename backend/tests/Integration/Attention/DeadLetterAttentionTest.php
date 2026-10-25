@@ -66,14 +66,32 @@ final class DeadLetterAttentionTest extends IntegrationTestCase
 
         $first = $this->commandBus()->dispatch(new OpenAttentionItem(AttentionType::Overpayment, $organizer, 'order', 'o1', null, ['amountMinor' => 100]));
         $second = $this->commandBus()->dispatch(new OpenAttentionItem(AttentionType::Overpayment, $organizer, 'order', 'o1'));
-        $closedNothing = $this->commandBus()->dispatch(new CloseAttentionItem(AttentionType::Overpayment, 'order', 'unknown'));
-        $closed = $this->commandBus()->dispatch(new CloseAttentionItem(AttentionType::Overpayment, 'order', 'o1'));
+        $closedNothing = $this->commandBus()->dispatch(new CloseAttentionItem(AttentionType::Overpayment, $organizer, 'order', 'unknown'));
+        $closed = $this->commandBus()->dispatch(new CloseAttentionItem(AttentionType::Overpayment, $organizer, 'order', 'o1'));
 
         self::assertIsString($first);
         self::assertNull($second);
         self::assertFalse($closedNothing);
         self::assertTrue($closed);
         self::assertSame(1, $this->dbInt("SELECT count(*) FROM attention.attention_item WHERE type = 'overpayment'"));
+    }
+
+    public function test_the_same_cause_at_two_organizers_opens_two_items(): void
+    {
+        $alpha = OrganizerId::fromString($this->createOwner('dedupe-a@example.test', 'dedupe-a')['organizerId']);
+        $beta = OrganizerId::fromString($this->createOwner('dedupe-b@example.test', 'dedupe-b')['organizerId']);
+
+        $first = $this->commandBus()->dispatch(new OpenAttentionItem(AttentionType::IntegrationDegraded, $alpha, 'integration', 'pairrot'));
+        $second = $this->commandBus()->dispatch(new OpenAttentionItem(AttentionType::IntegrationDegraded, $beta, 'integration', 'pairrot'));
+        $this->service(AttentionRaiser::class)->raise(new AttentionRequest(AttentionType::OutboxDeadLetter, 'dead_letter:x:Msg:9', $alpha, 'message', '9'));
+        $this->service(AttentionRaiser::class)->raise(new AttentionRequest(AttentionType::OutboxDeadLetter, 'dead_letter:x:Msg:9', $beta, 'message', '9'));
+        $closedAlpha = $this->commandBus()->dispatch(new CloseAttentionItem(AttentionType::IntegrationDegraded, $alpha, 'integration', 'pairrot'));
+
+        self::assertIsString($first);
+        self::assertIsString($second, 'organizer B is alerted although organizer A has an unresolved item of the same cause');
+        self::assertTrue($closedAlpha);
+        self::assertSame(['open'], $this->dbColumn("SELECT state FROM attention.attention_item WHERE type = 'integration_degraded' AND organizer_id = ?", [$beta->toString()]), 'closing A leaves B open');
+        self::assertSame(2, $this->dbInt("SELECT count(*) FROM attention.attention_item WHERE dedupe_key = 'dead_letter:x:Msg:9'"));
     }
 
     public function test_resolving_an_unknown_item_is_not_found(): void

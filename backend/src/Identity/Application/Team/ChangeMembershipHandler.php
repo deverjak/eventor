@@ -20,7 +20,7 @@ final readonly class ChangeMembershipHandler
         $role = Role::from($command->role);
         $membership = $this->memberships->find($command->membershipId, $command->organizerId) ?? throw MembershipNotFound::forId($command->membershipId);
 
-        if (Role::Owner === $membership->role() && Role::Owner !== $role && $this->memberships->countOwners($command->organizerId) <= 1) {
+        if (Role::Owner === $membership->role() && Role::Owner !== $role && $this->memberships->lockAndCountOwners($command->organizerId) <= 1) {
             throw LastOwnerRequired::create();
         }
 

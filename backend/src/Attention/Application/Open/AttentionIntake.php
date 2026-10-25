@@ -41,9 +41,9 @@ final readonly class AttentionIntake
         $this->open($type, $organizer, $subjectType, $subjectId, ['orderId' => $order->toString()] + $payload, $this->eventOf($organizer, $order));
     }
 
-    public function close(AttentionType $type, string $subjectType, string $subjectId): void
+    public function close(AttentionType $type, ?OrganizerId $organizer, string $subjectType, string $subjectId): void
     {
-        $this->commands->dispatch(new CloseAttentionItem($type, $subjectType, $subjectId));
+        $this->commands->dispatch(new CloseAttentionItem($type, $organizer, $subjectType, $subjectId));
     }
 
     private function eventOf(OrganizerId $organizer, OrderId $order): ?EventId

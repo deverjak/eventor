@@ -26,7 +26,7 @@ final readonly class CloseAttentionItemHandler
 
     public function __invoke(CloseAttentionItem $command): bool
     {
-        $item = $this->items->findUnresolvedByDedupeKey(OpenAttentionItem::dedupeKey($command->type, $command->subjectType, $command->subjectId));
+        $item = $this->items->findUnresolvedByDedupeKey($command->organizerId, OpenAttentionItem::dedupeKey($command->type, $command->subjectType, $command->subjectId));
         if (!$item instanceof AttentionItem) {
             return false;
         }

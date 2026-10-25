@@ -19,6 +19,6 @@ final readonly class OnTransactionAllocated
 
     public function __invoke(TransactionAllocated $event): void
     {
-        $this->attention->close(AttentionType::UnmatchedPayment, 'bank_transaction', $event->transactionId->toString());
+        $this->attention->close(AttentionType::UnmatchedPayment, $event->organizerId, 'bank_transaction', $event->transactionId->toString());
     }
 }

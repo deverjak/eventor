@@ -26,7 +26,7 @@ final readonly class OpenAttentionItemHandler
     public function __invoke(OpenAttentionItem $command): ?string
     {
         $key = OpenAttentionItem::dedupeKey($command->type, $command->subjectType, $command->subjectId);
-        if (null !== $this->items->findUnresolvedByDedupeKey($key)) {
+        if (null !== $this->items->findUnresolvedByDedupeKey($command->organizerId, $key)) {
             return null;
         }
 

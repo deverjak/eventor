@@ -301,6 +301,24 @@ final class PaymentsHttpTest extends HttpTestCase
         $this->assertProblem(404, 'refund_task_not_found');
     }
 
+    public function test_a_refund_cannot_exceed_the_money_the_order_received(): void
+    {
+        $unpaid = $this->placeOrderFinance($this->org, 30_000, PaymentMethod::Cash);
+        $paid = $this->placeOrderFinance($this->org, 30_000, PaymentMethod::Cash);
+        $this->login('owner@example.test');
+        $base = "/api/admin/org/{$this->slug}/refund-tasks";
+        $this->request('POST', "/api/admin/org/{$this->slug}/orders/{$paid->toString()}/cash", ['amountMinor' => 30_000], ['Idempotency-Key' => 'http-cash-0000000008']);
+
+        $this->request('POST', $base, ['orderId' => $unpaid->toString(), 'amountMinor' => 10_000, 'reason' => 'overpayment']);
+        $this->assertProblem(422, 'refund_exceeds_balance');
+        $this->request('POST', $base, ['orderId' => $paid->toString(), 'amountMinor' => 30_001, 'reason' => 'overpayment']);
+        $this->assertProblem(422, 'refund_exceeds_balance');
+
+        $this->request('POST', $base, ['orderId' => $paid->toString(), 'amountMinor' => 30_000, 'reason' => 'overpayment']);
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame(0, $this->dbInt('SELECT count(*) FROM payments.refund_task WHERE order_id = ?', [$unpaid->toString()]));
+    }
+
     public function test_a_refund_task_can_be_cancelled(): void
     {
         $order = $this->placeOrderFinance($this->org, 30_000, PaymentMethod::Cash);

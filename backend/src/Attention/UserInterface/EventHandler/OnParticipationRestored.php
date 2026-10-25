@@ -19,6 +19,6 @@ final readonly class OnParticipationRestored
 
     public function __invoke(ParticipationRestored $event): void
     {
-        $this->attention->close(AttentionType::LatePayment, 'participation', $event->participationId->toString());
+        $this->attention->close(AttentionType::LatePayment, $event->organizerId, 'participation', $event->participationId->toString());
     }
 }

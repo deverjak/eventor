@@ -80,4 +80,5 @@ return [
     'problem.refund_task_not_open.title' => 'Refund task is no longer open',
     'problem.unmatched_transaction_not_found.title' => 'Unmatched transaction not found',
     'problem.allocation_not_possible.title' => 'Payment cannot be allocated',
+    'problem.refund_exceeds_balance.title' => 'Refund exceeds the refundable balance',
 ];

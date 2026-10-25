@@ -27,9 +27,10 @@ final readonly class DoctrineAttentionItemRepository implements AttentionItemRep
         return $this->em->getRepository(AttentionItem::class)->findOneBy(['id' => $id, 'organizerId' => $organizer]);
     }
 
-    public function findUnresolvedByDedupeKey(string $dedupeKey): ?AttentionItem
+    public function findUnresolvedByDedupeKey(?OrganizerId $organizer, string $dedupeKey): ?AttentionItem
     {
         return $this->em->getRepository(AttentionItem::class)->findOneBy([
+            'organizerId' => $organizer,
             'dedupeKey' => $dedupeKey,
             'state' => [AttentionState::Open, AttentionState::Acknowledged],
         ]);

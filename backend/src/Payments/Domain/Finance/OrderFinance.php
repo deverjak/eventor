@@ -204,6 +204,16 @@ class OrderFinance implements TenantScoped, RecordsEventsInterface
         return Money::of($this->refundedMinor, $this->currency);
     }
 
+    /**
+     * Money that can still be returned: everything received minus what was already refunded, never below zero.
+     */
+    public function refundable(): Money
+    {
+        $left = $this->received()->subtract($this->refunded());
+
+        return $left->isPositive() ? $left : Money::zero($this->currency);
+    }
+
     public function overpaid(): Money
     {
         $excess = $this->received()->subtract($this->amountDue());

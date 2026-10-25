@@ -67,3 +67,7 @@ Pairrot and main-panel already run on PostgreSQL, so the operational knowledge e
 ## Related
 
 [ADR 002](002-capacity-buckets-conditional-update.md), [ADR 003](003-transactional-outbox-per-subscriber-delivery.md), [ADR 007](007-dynamic-form-schema-jsonb-snapshots.md) · [03 Data](../architecture/03-data/README.md), [01 Context and deployment](../architecture/01-kontext-a-nasazeni/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+`search_path` is set by the initialization script. The idempotency store uses `shared.idempotency_record` and stores completed responses as JSON. No `use_notify` / `LISTEN/NOTIFY` outbox wake-up is configured.

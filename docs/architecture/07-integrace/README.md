@@ -2,6 +2,8 @@
 
 # 07 · Integrace
 
+> **Stav W2 (25. 10. 2026).** Pairrot dekorátory mají priority retry 30 (nejvnitřnější), breaker 20 a logging 10. `PAIRROT_WEBHOOK_SECRETS` je seznam s volitelným prefixem `keyid:` a subtenant mimo produkci začíná `test_`. Reconcile provádí HTTP během command transakce; denní limit zatím není hotový.
+
 ## Co si odnést
 
 Eventor mluví se čtyřmi vnějšími službami: **Pairrot** (bankovní převody), **e-mailová služba**, **úložiště souborů** a nepřímo **mapy** (jen odkaz). Všechny integrace mají stejný tvar: port v aplikační vrstvě modulu, adaptér v infrastruktuře a dekorátory pro odolnost a logování. Pro testy existuje in-memory fake.

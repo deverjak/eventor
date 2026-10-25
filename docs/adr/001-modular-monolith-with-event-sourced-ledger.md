@@ -82,3 +82,7 @@ Eventor is a **modular monolith**: one Symfony 8.x application (8.1 at the time 
 ## Related
 
 [ADR 002](002-capacity-buckets-conditional-update.md), [ADR 003](003-transactional-outbox-per-subscriber-delivery.md), [ADR 011](011-workflow-component-state-machines.md) · [02 Modules and boundaries](../architecture/02-moduly-a-hranice/README.md), [05 State machines](../architecture/05-stavove-automaty/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+`ModuleBoundaryPass` currently judges injections by the declared constructor type. It misattributes inlined foreign internals to the consumer; two public services are the temporary workaround. A Shared port implemented by another module also cannot be injected by a non-owner, so Payments publishes integration-degraded anomalies instead of calling `AttentionRaiser`.

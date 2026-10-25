@@ -58,7 +58,7 @@ Eventor nevolá žádnou další službu. Antispam je honeypot s časovou pastí
 | `minio` | `minio/minio` | — | S3 úložiště, bucket `eventor-media` (fotky, PDF, snímky dokumentů) |
 | `pairrot-sandbox` | samostatný projekt | — | simulace Pairrotu. Eventor ho volá na `PAIRROT_API_URL` a sandbox posílá webhooky na `http://php:8080/api/webhooks/pairrot`. |
 
-Proč worker jako samostatný proces, a ne „dispatcher přes HTTP“ jako v main-panelu: Messenger worker je v Symfony standard, drží spojení s Postgresem, a jakmile outbox dostane nový řádek, probudí ho `LISTEN/NOTIFY`. Plánovač je součást workeru (`symfony/scheduler`), takže odpadá systémový cron i „fire and forget“ HTTP volání bez zpětné vazby. To je jedna z bolestí main-panelu (`main-panel/docs/architecture/09-kde-to-boli`).
+Proč worker jako samostatný proces, a ne „dispatcher přes HTTP“ jako v main-panelu: Messenger worker je v Symfony standard a drží spojení s Postgresem. Implementace W0 `LISTEN/NOTIFY` nepoužívá (`use_notify` není nastaveno), proto si worker frontu zjišťuje běžným pollingem. Plánovač je součást workeru (`symfony/scheduler`), takže odpadá systémový cron i „fire and forget“ HTTP volání bez zpětné vazby. To je jedna z bolestí main-panelu (`main-panel/docs/architecture/09-kde-to-boli`).
 
 ## Prostředí
 

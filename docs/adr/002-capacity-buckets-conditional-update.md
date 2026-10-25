@@ -82,3 +82,7 @@ Cash and free participations are claimed directly into `confirmed`. Bank-transfe
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 011](011-workflow-component-state-machines.md) · [03 Data](../architecture/03-data/README.md), [04 Key paths](../architecture/04-klicove-cesty/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+`capacity_bucket` also carries `event_id`; scope, unit and claim status are lowercase. Buckets are provisioned for every scope, including unlimited ones. `CapacityReleaser` publishes releases directly; a limit raised to unlimited publishes `seats = 1`. The production availability cache is Postgres-backed with a 30-second TTL and tags; `CapacityInvariantViolated` is an internal plain exception.

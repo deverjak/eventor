@@ -2,6 +2,8 @@
 
 # 04 · Klíčové cesty
 
+> **Stav W0–W2 (25. 10. 2026).** Zápisové cesty implementace vedou přes port `CommandBus`; runtime kontroluje, že command emituje událost. `OrderFinanceInitializer` běží synchronně v transakci `PlaceOrder`. Administrační POST zatím idempotenční klíč nevyžadují; veřejné operace používají sdílený idempotency mechanismus. Další odchylky jsou v [kapitole 11](../11-rizika-a-kompromisy/README.md).
+
 ## Co si odnést
 
 Systém nese jedenáct cest. Každá z nich je **jeden příkaz v jedné transakci**, ke kterému se asynchronně, přes outbox, přidávají reakce ostatních modulů.

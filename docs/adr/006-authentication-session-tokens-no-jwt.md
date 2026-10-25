@@ -78,3 +78,7 @@ Four firewalls in `security.yaml`, in this order:
 ## Related
 
 [ADR 004](004-pairrot-integration-contract.md), [ADR 005](005-tenant-from-url-doctrine-filter-voters.md), [ADR 010](010-monorepo-nextjs-frontend.md) · [08 Crosscutting concepts](../architecture/08-prurezove-koncepty/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+Invitation tokens are HMAC-derived and only SHA-256 is stored; `acceptToken` is returned only in dev/test. The check-in firewall matches both a `Bearer dev1_` token and the request path, otherwise it falls through to the team firewall. Event scope is read from the database by `AccessPolicy::isAllowedForEvent`/`eventScope`; a second revoke returns 404. Sign-up and invitation routes share a production limit of 20/h.

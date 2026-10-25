@@ -82,3 +82,7 @@ Each dimension is a **separate column with its own state machine**. They are def
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 003](003-transactional-outbox-per-subscriber-delivery.md) · [05 State machines](../architecture/05-stavove-automaty/README.md), [09 Symfony](../architecture/09-symfony-v-architekture/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+`PaymentRequest` has no Symfony Workflow. Workflow marking-store integration requires public entity setters. Attention states are lowercase `open → acknowledged → resolved | dismissed`; `acknowledged` replaces `assigned`.

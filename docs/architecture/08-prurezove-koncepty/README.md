@@ -2,6 +2,10 @@
 
 # 08 · Průřezové koncepty
 
+> **Stav W0–W2 (25. 10. 2026).** Problem details serializují `nextSteps` jako seznam. Money má API tvar `{minor, currency, formatted}`. CSRF vyžaduje same-origin `Origin` a hlavičku `csrf-token` s libovolnou hodnotou délky nejméně 24. `TenantContext` je v `Shared\Application`. Pozvánkový token je HMAC-odvozený a v databázi se drží jen jeho SHA-256; `acceptToken` se vrací jen v dev/test.
+
+Samoobslužný odkaz vytváří `SelfServiceLinks::urlFor()` z odvoditelného tokenu. Kontrola scope události je databázová (`AccessPolicy::isAllowedForEvent` / `eventScope`); opakované odvolání pozvánky vrací 404. Sign-up i pozvánky sdílejí v produkci limit 20/h.
+
 ## Co si odnést
 
 Průřezové koncepty jsou pravidla, která platí ve všech modulech: kdo je kdo, kdo smí co, čí data to jsou, jak se počítají peníze a čas, jak se opakuje bez duplicit, jak vypadají tokeny, jak se chrání osobní údaje a jak se hlásí chyby.

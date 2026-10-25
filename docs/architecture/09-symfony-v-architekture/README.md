@@ -2,6 +2,8 @@
 
 # 09 · Symfony v architektuře
 
+> **Stav W0–W2 (25. 10. 2026).** Konfigurace je PHP (`App::config([...])`), nikoli YAML, a runtime tvoří vlastní `FrankenPhpRuntime`. `ModuleBoundaryPass` posuzuje deklarovaný typ parametru konstruktoru; inlinovanou cizí interní službu proto nyní omylem přičte konzumentovi. Stejná kontrola neumožňuje ne-vlastníkovi injektovat implementaci Shared portu jiného modulu. Podrobnosti a workaround jsou v [kapitole 11](../11-rizika-a-kompromisy/README.md).
+
 ## Co si odnést
 
 Symfony v Eventoru neslouží jen k routování a ORM. Jeho DI kontejner je nástroj, který vynucuje architekturu: hranice modulů, registry typů polí, routing integračních událostí a matici oprávnění ověřují compiler passy při `cache:warmup`, takže chyba konfigurace shodí build, a ne produkci. Odolnost a logování bez osobních údajů se k Pairrot klientovi přidávají dekorací, ne úpravou adaptéru. Tenant, tokeny samoobsluhy a QR se dekódují ve value resolverech dřív, než se spustí controller, takže controllery zůstávají na pár řádcích. Každý mechanismus v této kapitole má doménový důvod. Kapitola končí maticí „požadavek z inzerátu → kde ho Eventor ukazuje“.

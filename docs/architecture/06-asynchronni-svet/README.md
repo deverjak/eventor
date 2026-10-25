@@ -2,6 +2,8 @@
 
 # 06 · Asynchronní svět
 
+> **Stav W0–W2 (25. 10. 2026).** Doctrine transport v aktuální konfiguraci nepoužívá `use_notify`; `LISTEN/NOTIFY` proto worker neprobouzí. `#[PendingSubscribers]` u kontraktní události znamená modul, který dosud není připojen; aktuální zdroj pravdy je [katalog](katalog-udalosti.md).
+
 ## Co si odnést
 
 Mimo HTTP požadavky se v Eventoru dějí tři druhy věcí:

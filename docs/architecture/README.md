@@ -3,7 +3,7 @@
 Tato kniha popisuje **cílovou solution architecture** Eventoru, webové platformy pro pořadatele akcí: registrace, platby převodem přes Pairrot a hotově, komunikace, program, odbavení, právní dokumenty a souhlasy a obsah po akci. Popisuje moduly, data, toky, rozhodnutí a invarianty. Jména tříd a tabulek uvádí jen jako vstupní body do budoucího kódu.
 
 > **Zdroj pravdy.** Chování systému určuje [zadání V3](../initial-idea/zadani-event-platforma.md) (feature ID typu `REG-01` a scénáře `S01–S18` odkazují tam). Rozhodnutí zaznamenávají [ADR](../adr/) (anglicky). Tato kniha je mapou nad oběma. Jak se ke směru došlo, popisují [podklady k rozhodnutí](navrhy/00-architektonicke-smery.md).
-> **Stav:** návrh před implementací, 24. 10. 2026. Kniha se při stavbě drží v souladu s kódem. Když se kód a kniha rozejdou, platí kód a rozpor se zapíše do kapitoly [11](11-rizika-a-kompromisy/README.md).
+> **Stav:** návrh průběžně srovnaný s implementací W0–W2, 25. 10. 2026. Když se kód a kniha rozejdou, platí kód a rozpor se zapíše do kapitoly [11](11-rizika-a-kompromisy/README.md).
 
 ## Co si odnést
 

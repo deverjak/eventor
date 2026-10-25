@@ -50,3 +50,7 @@ Eventor is a modular monolith on one database ([ADR 001](001-modular-monolith-wi
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 003](003-transactional-outbox-per-subscriber-delivery.md), [ADR 005](005-tenant-from-url-doctrine-filter-voters.md), [ADR 009](009-postgresql.md) · [03 Data](../architecture/03-data/README.md), [02 Modules](../architecture/02-moduly-a-hranice/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+The PostgreSQL `search_path` is set in the initialization script. Messenger does not currently use the `LISTEN/NOTIFY` wake-up described in this ADR.

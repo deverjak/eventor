@@ -84,3 +84,7 @@ last-verified: 2026-10-24
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 007](007-dynamic-form-schema-jsonb-snapshots.md), [ADR 011](011-workflow-component-state-machines.md) · [03 Data](../architecture/03-data/README.md), [08 Crosscutting concepts](../architecture/08-prurezove-koncepty/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+Versions begin as drafts and receive their hash and storage key when the draft is created. Legal uses the media bucket under `legal/`. The voluntary-consent rule covers `consent` and `likeness`; `preChecked` exists only for rejection. S14 leaves existing registrations unchanged, and minor status is derived from guardian rows through `RegistrationSlot.minor`.

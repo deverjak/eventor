@@ -91,3 +91,7 @@ public function __invoke(
 ## Related
 
 [ADR 005](005-tenant-from-url-doctrine-filter-voters.md), [ADR 006](006-authentication-session-tokens-no-jwt.md), [ADR 010](010-monorepo-nextjs-frontend.md) · [08 Crosscutting concepts](../architecture/08-prurezove-koncepty/README.md), [09 Symfony](../architecture/09-symfony-v-architekture/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+Writes go through the `CommandBus` port and the "every command emits an event" rule is enforced at runtime. Problem details use a list-valued `nextSteps`; CSRF requires a same-origin `Origin` plus any `csrf-token` header value of at least 24 characters. Admin POST routes do not currently require an idempotency key.

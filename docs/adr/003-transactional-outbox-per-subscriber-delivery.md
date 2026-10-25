@@ -123,3 +123,7 @@ The event catalogue is therefore checked by code.
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 004](004-pairrot-integration-contract.md) · [06 Async world](../architecture/06-asynchronni-svet/README.md), [09 Symfony](../architecture/09-symfony-v-architekture/README.md) · Supersedes: the custom-table design in the first version of this ADR.
+
+## Implementation note (2026-10-25)
+
+The Doctrine transports currently do not set `use_notify`; the worker polls rather than using PostgreSQL `LISTEN/NOTIFY`.

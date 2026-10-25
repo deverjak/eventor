@@ -2,6 +2,10 @@
 
 # 05 · Stavové automaty
 
+> **Stav W2 (25. 10. 2026).** `PaymentRequest` v implementaci nemá Symfony Workflow. Entity, které obsluhuje workflow marking store, mají veřejné settery. Attention používá lowercase stavy `open → acknowledged → resolved | dismissed`; `acknowledged` nahrazuje dřívější `assigned`.
+
+`catalog.registration_state_changed` se emituje jak při změně stavu celé události, tak při změně jedné aktivity. Automatické otevírání a zavírání registrace schedulerem dosud implementováno není.
+
 ## Co si odnést
 
 Zadání (kap. 5) žádá, aby se stavové dimenze nesloučily do jednoho pole. Eventor má proto **osm definic Symfony Workflow** (`type: state_machine`), každou nad vlastním sloupcem: `participation`, `event_publication`, `registration_window` (událost i aktivita), `payment_request`, `delivery`, `refund_task`, `attention_item` a `waitlist_offer`. Odbavení a právní potvrzení jsou **append-only tabulky**: jejich stav je poslední platný řádek, ne přechod ve sloupci.

@@ -267,6 +267,7 @@ Envelope of every event: `organizerId` first, `occurredAt` last (omitted below).
 | Class | Problem code | HTTP | Meaning |
 |---|---|---|---|
 | `BankAccountUnavailable` | `bank_account_unavailable` | 409 | The bank account is already connected to another subtenant (Pairrot `409 account_unavailable`). |
+| `InvalidBankAccount` | `invalid_bank_account` | 422 | Pairrot refused the account number or IBAN (format, check digits or unsupported bank); the onboarding wizard shows it at the input. |
 | `CashNotAllowed` | `cash_not_allowed` | 403 | The organizer policy does not let this actor record cash (`check_in_may_record_cash`, role). |
 | `OrderFinanceNotFound` | `order_finance_not_found` | 404 | The order has no finance row (unknown order, or `OrderFinanceInitializer` was not called). |
 | `PairrotUnavailable` | `pairrot_unavailable` | 503 | Pairrot did not answer (network, 5xx, 429, open circuit breaker). Retryable; crosses the boundary for the onboarding wizard. |

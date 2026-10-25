@@ -2,6 +2,8 @@
 
 # 03 · Data
 
+> **Stav W2 (25. 10. 2026).** Catalog ukládá venues jako JSONB do `event`, nikoli do tabulky. Draft formuláře je `form_version` s `published_at IS NULL`. `capacity_bucket` má navíc `event_id` a hodnoty scope/unit/status jsou lowercase. Legal verze dostane hash i storage key už při vytvoření draftu a používá media bucket s prefixem `legal/`. Podrobnosti odchylek jsou v [kapitole 11](../11-rizika-a-kompromisy/README.md).
+
 ## Co si odnést
 
 Eventor má jednu databázi PostgreSQL 17 a **co modul, to schéma** (`registration`, `payments`, `legal`, …), plus `shared` pro technické tabulky ([ADR 013](../../adr/013-postgres-schema-per-module.md)). Každá tabulka má právě jednoho vlastníka a je jím modul, jehož schéma ji obsahuje. Každá tenant-scoped tabulka nese `organizer_id`.
@@ -42,8 +44,8 @@ Append-only tabulky (`ledger_entry`, `audit_entry`, `confirmation`) jsou chrán�
 | `participation_group` | `id`, `order_id`, `variant_id`, `name`, `contact_person_id` | tým / dvojice (REG-04) |
 | `answer_set` | `id`, `organizer_id`, `order_id`, `scope` (`ORDER`/`PERSON`/`PARTICIPATION`/`GROUP`), `subject_id`, `form_version_id`, `answers jsonb`, `superseded_by_id` | `UNIQUE (scope, subject_id) WHERE superseded_by_id IS NULL`. Oprava údajů vytvoří novou sadu a starou označí jako nahrazenou, takže historie odpovědí zůstává. |
 | `order_item` | `id`, `order_id`, `add_on_id`, `person_id`, `quantity`, `unit_price_minor`, `options jsonb` | snapshot ceny v okamžiku objednávky |
-| `capacity_bucket` | `id`, `organizer_id`, `scope_type` (`EVENT`/`ACTIVITY`/`VARIANT`/`WAVE`), `scope_id`, `"limit"` (NULL = bez limitu), `held`, `confirmed`, `overbooked_allowed`, `unit` (`SEAT`/`TEAM`) | `UNIQUE (scope_type, scope_id)`, `CHECK (held >= 0 AND confirmed >= 0)`, `CHECK ("limit" IS NULL OR held + confirmed <= "limit" OR overbooked_allowed)`. Viz níže. |
-| `capacity_claim` | `participation_id`, `bucket_id`, `seats`, `status` (`HELD`/`CONFIRMED`/`RELEASED`) | PK `(participation_id, bucket_id)`. Podle claimů se uvolňuje přesně to, co bylo obsazeno, i když se mezitím změnila konfigurace. |
+| `capacity_bucket` | `id`, `organizer_id`, `event_id`, `scope_type` (`event`/`activity`/`variant`/`wave`), `scope_id`, `"limit"` (NULL = bez limitu), `held`, `confirmed`, `overbooked_allowed`, `unit` (`seat`/`team`) | `UNIQUE (scope_type, scope_id)`, `CHECK (held >= 0 AND confirmed >= 0)`, `CHECK ("limit" IS NULL OR held + confirmed <= "limit" OR overbooked_allowed)`. Viz níže. |
+| `capacity_claim` | `participation_id`, `bucket_id`, `seats`, `status` (`held`/`confirmed`/`released`) | PK `(participation_id, bucket_id)`. Podle claimů se uvolňuje přesně to, co bylo obsazeno, i když se mezitím změnila konfigurace. |
 | `waitlist_entry`, `waitlist_offer` | `activity_id`, `variant_id`, `position`, `contact`, `offer_expires_at`, `state` | P1 (REG-12). `UNIQUE (variant_id, position)`. |
 | `promo_code`, `discount` | `code`, `kind`, `value`, `valid_from/to`, `max_uses`, `used` | P1 (EVT-15). `used` se zvyšuje podmíněným `UPDATE` stejně jako kapacita. |
 | `self_service_token` | `id`, `order_id`, `secret_sha256`, `scope`, `expires_at`, `revoked_at`, `last_used_at` | v DB jen hash. Odvolatelnost = `revoked_at`. |

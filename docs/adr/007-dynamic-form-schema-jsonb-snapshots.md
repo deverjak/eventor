@@ -86,3 +86,7 @@ The Next.js frontend must render the same form from the same definition.
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 009](009-postgresql.md), [ADR 012](012-legal-documents-content-addressed-versions.md) · [03 Data](../architecture/03-data/README.md), [09 Symfony](../architecture/09-symfony-v-architekture/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+A form draft is a `form_version` row with `published_at IS NULL`. The FRM-11 preview belongs to Registration, and `maxLength = 0` / `maxChoices = 0` are currently validated as 1.

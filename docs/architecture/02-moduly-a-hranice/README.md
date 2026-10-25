@@ -2,6 +2,8 @@
 
 # 02 · Moduly a hranice
 
+> **Stav W1–W2 (25. 10. 2026).** deptrac povoluje Domain → vlastní Contract. Registration vlastní capacity buckety a Catalog je při publikaci či změně kapacity provisionuje přes `CapacityProvisioner`. `OrderFinanceInitializer` běží synchronně v `PlaceOrder`; novou veřejnou fasádou Payments je `PairrotOnboarding`. Praktická omezení DI hranice popisuje [kapitola 11](../11-rizika-a-kompromisy/README.md).
+
 ## Co si odnést
 
 Backend je jedna Symfony aplikace rozdělená na dvanáct modulů (bounded contextů) a sdílený kernel `Shared`. Každý modul má stejné vnitřní vrstvy. Jiný modul do něj smí jen přes jeho `Contract/`: fasádu, DTO a výjimky. Entity hranici modulu nikdy nepřekračují.
@@ -43,7 +45,7 @@ Rozhodnutí a zvažované alternativy jsou v [ADR 001](../../adr/001-modular-mon
 | **Attention** | fronta „vyžaduje pozornost“ | `attention_item` | `AttentionQueue` | `AttentionItemResolved` | `LatePaymentReceived`, `OverpaymentDetected`, `UnmatchedTransactionReceived`, `DeliveryFailed`, `ConsentWithdrawn`, `ParticipationRequiresAttention`, dead-letter outboxu |
 | **Reporting** | dashboardy, přehledy, exporty, report po akci | jen pohledy ve schématu `reporting` (read-only) | `ReportQuery`, `CsvExporter` | — | — |
 
-**Shared (kernel)** obsahuje jen to, co potřebují všichni a co nemá doménového vlastníka: `Money`, `Clock` (adaptér na `symfony/clock`), typované identifikátory (`OrganizerId`, …), `TenantContext`, `AuditActor`, Messenger infrastrukturu (middleware, retry strategie, `#[IntegrationEvent]`) a základní doménovou výjimku. Kernel nesmí obsahovat doménová pravidla. Když se nějaký koncept do kernelu „hodí“, je to signál, že mu chybí vlastník.
+**Shared (kernel)** obsahuje jen to, co potřebují všichni a co nemá doménového vlastníka: `Money`, `Clock` (adaptér na `symfony/clock`), typované identifikátory (`OrganizerId`, …), `TenantContext` v `Shared\Application`, `AuditActor`, Messenger infrastrukturu (middleware, retry strategie, `#[IntegrationEvent]`) a základní doménovou výjimku. Kernel nesmí obsahovat doménová pravidla. Když se nějaký koncept do kernelu „hodí“, je to signál, že mu chybí vlastník.
 
 ## Kdo sdílí transakci
 

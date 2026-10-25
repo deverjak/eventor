@@ -114,3 +114,7 @@ Pairrot is an existing external service. It matches incoming bank transfers to p
 ## Related
 
 [ADR 001](001-modular-monolith-with-event-sourced-ledger.md), [ADR 003](003-transactional-outbox-per-subscriber-delivery.md), [ADR 006](006-authentication-session-tokens-no-jwt.md) · [07 Integrations](../architecture/07-integrace/README.md), [04 Key paths](../architecture/04-klicove-cesty/README.md) · Supersedes: None.
+
+## Implementation note (2026-10-25)
+
+Decorator priorities are retry 30 (innermost), breaker 20 and logging 10. Webhook secrets are a list with optional `keyid:` prefixes; non-production subtenants use `test_`. Reconciliation performs its HTTP call inside the command transaction and has no daily limit. Ledger idempotency is `UNIQUE (organizer_id, source, source_ref)`.

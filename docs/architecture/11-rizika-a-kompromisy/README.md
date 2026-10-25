@@ -69,10 +69,75 @@ Main-panel (NaLekci) prošel cestou k modulárnímu monolitu zpětně. Jeho kapi
 | tajemství porovnávané `===`, fallback na jiný klíč | `hash_equals` všude, žádné fallbacky klíčů, tajemství ve Symfony Secrets |
 | dokumentace se rozcházela s kódem | definice hotového zahrnuje knihu; workflow dump a check-links v CI |
 
-## Rozpory mezi knihou a kódem
+## Odchylky implementace od návrhu (W0–W2)
 
-Zatím žádné. Kód ještě neexistuje. Jakmile vznikne, každý zjištěný rozpor se zapíše sem s datem, místem v kódu a rozhodnutím, zda se upraví kód, nebo kniha.
+Platí stav ověřený ve zdrojovém kódu 25. 10. 2026; „důvod“ popisuje implementační kompromis, nikoli nové ADR rozhodnutí.
 
-| Datum | Kapitola | Rozpor | Rozhodnutí |
+| Vlna | Kniha původně říkala | Implementace | Důvod |
 |---|---|---|---|
-| — | — | — | — |
+| W0 | YAML konfigurace | PHP konfigurace `App::config([...])` | skutečně použitý Symfony styl konfigurace |
+| W0 | standardní runtime | vlastní `FrankenPhpRuntime` a worker runner | přizpůsobení FrankenPHP worker režimu |
+| W0 | pass rozpozná reálnou službu | `ModuleBoundaryPass` soudí podle deklarovaného typu parametru konstruktoru | omezení současné implementace passu |
+| W0 | inlinovaná cizí interní služba nevadí | pass ji nesprávně přičte konzumentovi; obchází se dvěma veřejnými službami | oprava passu čeká |
+| W0 | libovolný modul může injektovat cizí implementaci Shared portu | neinjektuje ji; Payments hlásí anomálie událostí místo `AttentionRaiser` | omezení hranice DI |
+| W0 | neurčená tabulka/odpověď idempotence | `shared.idempotency_record`, dokončená odpověď jako JSON | DBAL implementace store |
+| W0 | problem detail s neurčeným dalším krokem | `nextSteps` je seznam akcí | serializační kontrakt API |
+| W0 | Money bez prezentační hodnoty | `{minor, currency, formatted}` | pohodlí klienta; vstup `formatted` ignoruje |
+| W0 | běžné CSRF tokeny | hlavička `csrf-token` s libovolnou hodnotou délky alespoň 24 a stejný `Origin` | ochrana pro same-origin API |
+| W0 | outbox probouzí `LISTEN/NOTIFY` | `use_notify` se nepoužívá | worker polluje Doctrine transport |
+| W0 | neurčená cesta zápisu | zápisy vedou přes port `CommandBus`; runtime ověřuje událost z každého commandu | vynucení aplikačního pravidla |
+| W0 | audit a attention zapisují ORM cestou | zapisují přes DBAL porty | append-only a modulové rozhraní |
+| W0 | neurčené umístění tenant kontextu | `Shared\Application\TenantContext` | skutečné členění Shared |
+| W0 | `minio/minio` | `bitnamilegacy/minio:latest` | image v compose |
+| W1 | Domain nesmí do vlastního Contract | deptrac povoluje Domain → vlastní Contract | doména používá vlastní výjimky a enumy |
+| W1 | obálka události byla nejednotná | každá má `organizerId` první a `occurredAt` poslední | jednotný kontrakt integrací |
+| W1 | Catalog vlastní/provisionuje kapacitu | buckety vlastní Registration; Catalog volá `CapacityProvisioner` | vlastnictví kapacity zůstává u registrace |
+| W1 | finance objednávky vznikají asynchronně | `OrderFinanceInitializer` je synchronní v `PlaceOrder` | okamžitý finanční stav; rozpor kap. 02/04 vyřešen kódem |
+| W1 | chyběl odběratel publikace události | `checkin` subscribuje `catalog.event_published` | založení výchozích check-in seznamů |
+| W1 | chyběla fasáda onboarding | `Payments\Contract\PairrotOnboarding` | Identity vede průvodce, Payments vlastní Pairrot |
+| W1 | self-service URL potřebuje uložené tajemství | `SelfServiceLinks::urlFor()` odvozuje token | tajemství necestuje po event busu |
+| W1 | FRM-11 je Catalog | náhled formuláře je Registration | Registration už spojuje Catalog a Legal |
+| W2 Catalog | venue je samostatná tabulka | `event.venues` je JSONB | jednodušší aktuální model |
+| W2 Catalog | draft formuláře měl vlastní model | draft je `form_version` s `published_at IS NULL` | jedna tabulka verzí |
+| W2 Catalog | entity bez veřejných setterů | settery jsou veřejné | vyžaduje je workflow marking store |
+| W2 Catalog | chyběl veřejný detail dostupnosti | existuje `GET …/availability` | veřejná registrace |
+| W2 Catalog | změna registrace jen pro událost | `catalog.registration_state_changed` vzniká i pro aktivitu | samostatná registrační okna |
+| W2 Catalog | admin POST vyžadují idempotency key | nevyžadují jej | současný HTTP kontrakt |
+| W2 Catalog | nula je platné maximum | `maxLength 0` a `maxChoices 0` se validují jako 1 | omezení validátoru |
+| W2 Catalog | unlimited scope nemá bucket | provisionují se buckety všech scope | jednotné čtení a budoucí změna limitu |
+| W2 Catalog | plánovač automaticky otevírá/zavírá registraci | dosud není | neimplementovaná automatizace |
+| W2 Registration | data bucketu nemají `event_id`, hodnoty jsou velké | `capacity_bucket.event_id`; scope, unit a status jsou lowercase | skutečné DB schema |
+| W2 Registration | uvolnění oznamuje následný subscriber | oznamuje je přímo `CapacityReleaser` | jedna odpovědnost za release |
+| W2 Registration | přechod na unlimited neuvolňuje místa | oznámí `seats = 1` | invalidace dostupnosti |
+| W2 Registration | availability cache neurčena | produkce: Postgres cache, TTL 30 s a tagy | dostupný cache backend |
+| W2 Registration | `CapacityInvariantViolated` je problem výjimka | obyčejná výjimka | interní invariant |
+| W2 Legal | hash a key vznikají při publikaci | vznikají už při vytvoření draftu | draft je pevně adresovatelný |
+| W2 Legal | voluntary pravidlo jen pro consent | platí pro `consent` i `likeness` | oba typy jsou dobrovolné |
+| W2 Legal | `preChecked` obecně | existuje jen pro rejection | právní pravidlo UI |
+| W2 Legal | vlastní legal storage | media bucket s prefixem `legal/` | sdílený Flysystem bucket |
+| W2 Legal | S14 neurčeno | nová verze bez reconfirmation nemění staré registrace | scénář S14 |
+| W2 Legal | minor se určuje věkem | vychází z guardian řádků; `RegistrationSlot.minor` | dostupná data registrace |
+| W2 Identity | invitation token uložený přímo | token HMAC odvozený, v DB jen SHA-256 | neukládat přijímací tajemství |
+| W2 Identity | `acceptToken` vždy ve výstupu | jen dev a test | nevyzradit token v produkci |
+| W2 Identity | check-in firewall obecný | request matcher: `Bearer dev1_` i cesta; jinak team firewall | správné rozlišení zařízení |
+| W2 Identity | event scope z tokenu | `AccessPolicy::isAllowedForEvent`/`eventScope` čte DB | aktuální oprávnění |
+| W2 Identity | opakované revoke je idempotentní | vrací 404 | stav již neexistuje |
+| W2 Identity | oddělené limity registrace/pozvánky | sdílený limit 20/h v prod | ochrana jednoho vstupu |
+| W2 Payments | priority dekorátorů obráceně | retry 30 (uvnitř), breaker 20, logging 10 | pořadí vrstev zůstalo správné |
+| W2 Payments | anomálie přes attention port | `payments.integration_degraded` s kódem `reason` | omezení DI Shared portu |
+| W2 Payments | `pairrot_revocation.compensates_id` povinné | je volitelné | webhook může nemít kompenzovanou položku |
+| W2 Payments | jiný klíč ledger idempotence | `UNIQUE (organizer_id, source, source_ref)` | přirozený zdrojový klíč |
+| W2 Payments | supplementary request z celé potřeby | `need − outstanding` částečně zaplacených requestů | nezduplikovat dlužnou částku |
+| W2 Payments | neurčené review case | `PaymentDisputeOpened.reviewCaseId = event:<pairrot event id>` | dohledatelnost Pairrot události |
+| W2 Payments | webhook secrets s povinným ID | seznam, `keyid:` je volitelný prefix | rotace i lokální klíče |
+| W2 Payments | jiný prefix subtenantu | mimo prod `test_` | oddělení sandboxu |
+| W2 Payments | cash permission ve voteru | kontroluje ji `CashDesk` | ochrana zápisové fasády |
+| W2 Payments | reconcile mimo command transakci | HTTP běží uvnitř command transakce | současná implementace |
+| W2 Payments | denní limit reconcile | není implementován | odložené omezení |
+| W2 Payments | `PaymentRequest` má workflow | workflow nemá | stav je řízen adapterem/handlery |
+| W2 Audit/Attention | event manager vidí jen vlastní akce | `AuditVoter` rozhoduje podle role; audit nemá event id | nelze bezpečně zúžit scope |
+| W2 Audit/Attention | `assigned` | lowercase `open → acknowledged → resolved \| dismissed` | `assigned` přejmenováno na `acknowledged` |
+| W2 Audit/Attention | obecná deduplikace | nejvýše jedna nevyřešená položka na `(type, subject)` | současný unique invariant |
+| W2 Audit/Attention | všechny typy existují | chybějící se mapují na nejbližší typ a payload má `source` | postupná implementace typů |
+| W2 Audit/Attention | akce měnící cizí modul jsou commandy | zatím jsou odkazy | zachování hranic modulů |
+| W2 Audit/Attention | per-entity audit bez view/voteru | endpoint deklaruje `OrganizerView`, přístup ověřuje voter | typovaný pohled a autorizace |

@@ -1,0 +1,34 @@
+# PHPStan level max (chapter 10) with the Symfony, Doctrine, PHPUnit and strict-rules extensions and the Eventor rules.
+# Run: bin/check (repository root) or `docker compose exec php vendor/bin/phpstan analyse`.
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+        - phpstan
+        - migrations
+    excludePaths:
+        analyse:
+            - tests/bootstrap.php
+            - tests/Fixtures/PHPStan
+    tmpDir: var/phpstan
+    treatPhpDocTypesAsCertain: false
+    symfony:
+        # Compiled dev container; `bin/check` warms it up first. Gives PHPStan the service ids and parameters.
+        containerXmlPath: var/cache/dev/Eventor_KernelDevDebugContainer.xml
+        consoleApplicationLoader: phpstan/console-application.php
+    doctrine:
+        objectManagerLoader: phpstan/object-manager.php
+    ignoreErrors: []
+
+services:
+    -
+        class: Eventor\PHPStan\Rules\NoNativeDateTimeRule
+        tags:
+            - phpstan.rules.rule

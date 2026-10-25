@@ -1,0 +1,22 @@
+# FrankenPHP worker mode: the Symfony kernel stays in memory between requests, so everything
+# stateful must implement ResetInterface (TenantContext, ...). Code edits need a container restart.
+# Used by `php-api` (black-box tests) and the prod image.
+{
+	auto_https off
+	admin off
+	frankenphp {
+		worker {
+			file /app/public/index.php
+			num {$FRANKENPHP_WORKERS:2}
+			env APP_RUNTIME Eventor\Shared\Infrastructure\Runtime\FrankenPhpRuntime
+		}
+	}
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+	php_server {
+		root /app/public
+	}
+}

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Black-box API tests: resets the `eventor_api` database, migrates it, seeds the accounts the tests log in with,
+# (re)starts php-api (FrankenPHP worker mode) and worker-api, then runs `phpunit --testsuite api` against
+# http://php-api. The tests themselves only speak HTTP: no container, no database access.
+#
+#   bin/api-test                      # whole suite
+#   bin/api-test --filter Login       # extra arguments go to phpunit
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+# Seed data. Keep in sync with backend/tests/Api/Support/ApiFixtures.php.
+ALPHA_EMAIL="owner.alpha@api-test.example"; ALPHA_PASSWORD="alpha-owner-password"; ALPHA_SLUG="api-alpha"; ALPHA_NAME="API Alpha"
+BETA_EMAIL="owner.beta@api-test.example";   BETA_PASSWORD="beta-owner-password";   BETA_SLUG="api-beta";   BETA_NAME="API Beta"
+
+ensure_stack_base
+dc stop php-api worker-api >/dev/null 2>&1 || true
+
+echo "==> reset database eventor_api"
+recreate_database eventor_api
+dc run --rm --no-deps -T php-api sh -c '
+  php bin/console cache:clear --no-warmup -q &&
+  php bin/console doctrine:migrations:migrate --no-interaction -q &&
+  php bin/console eventor:identity:create-owner --email='"$ALPHA_EMAIL"' --password='"$ALPHA_PASSWORD"' --organizer-name="'"$ALPHA_NAME"'" --slug='"$ALPHA_SLUG"' -q &&
+  php bin/console eventor:identity:create-owner --email='"$BETA_EMAIL"' --password='"$BETA_PASSWORD"' --organizer-name="'"$BETA_NAME"'" --slug='"$BETA_SLUG"' -q &&
+  php bin/console cache:warmup -q'
+
+echo "==> start php-api and worker-api"
+dc up -d --force-recreate worker-api
+dc up -d --wait --force-recreate php-api
+
+echo "==> phpunit --testsuite api"
+dc exec -T -e API_BASE_URL="${API_BASE_URL:-http://php-api}" php vendor/bin/phpunit --testsuite api "$@"

@@ -17,3 +17,6 @@ docs/architecture/_export/out/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local compose overrides (port clashes etc.)
+compose.override.yaml

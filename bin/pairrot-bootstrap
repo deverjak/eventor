@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Builds and starts the local Pairrot (from PAIRROT_PATH, default ../chytre-digital/pairrot), creates the Eventor
+# root tenant with its two API keys and writes them to backend/.env.local (git-ignored):
+#
+#   PAIRROT_BASE_URL=http://pairrot:8080          (address of Pairrot inside the compose network)
+#   PAIRROT_MANAGEMENT_KEY=prt_…                  (management key: creates subtenants and bank connections)
+#   PAIRROT_TENANT_KEY=prt_…                      (tenant key)
+#
+# Idempotent. `Pairrot.Admin setup` prints the keys exactly once; when the root tenant already exists and
+# .env.local lacks the keys, new keys are issued (`keys issue`), so re-running never leaves you without credentials.
+# Pairrot's own repository is only read (docker build context), never modified.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+ROOT_ID="${PAIRROT_ROOT_ID:-eventor-local}"
+ENV_FILE="$ROOT/backend/.env.local"
+ADMIN=(dotnet admin/Pairrot.Admin.dll)
+
+echo "==> postgres"
+dc up -d --wait postgres >/dev/null
+
+echo "==> build pairrot image (first build downloads the .NET SDK, several minutes)"
+dc build pairrot
+
+# One-off containers: they need only the database, not a healthy API (which cannot start before the schema exists).
+pairrot_admin() { dc run --rm --no-deps -T --entrypoint "${ADMIN[0]}" pairrot "${ADMIN[@]:1}" "$@"; }
+
+echo "==> pairrot setup (migrations + root tenant '$ROOT_ID')"
+setup_out="$(pairrot_admin setup --root "$ROOT_ID" --name "Eventor (local)" --operator eventor-bootstrap </dev/null)"
+echo "$setup_out"
+
+tenant_key="$(sed -nE 's/^[[:space:]]*tenant[[:space:]]+key[[:space:]]+[^:]+:[[:space:]]*(prt_[A-Za-z0-9_-]+).*$/\1/p' <<<"$setup_out" | head -n1)"
+mgmt_key="$(sed -nE 's/^[[:space:]]*management[[:space:]]+key[[:space:]]+[^:]+:[[:space:]]*(prt_[A-Za-z0-9_-]+).*$/\1/p' <<<"$setup_out" | head -n1)"
+
+env_get() { [ -f "$ENV_FILE" ] && sed -nE "s/^$1=(.*)$/\1/p" "$ENV_FILE" | head -n1 || true; }
+env_set() { # env_set NAME VALUE
+  touch "$ENV_FILE"
+  if grep -qE "^$1=" "$ENV_FILE"; then
+    # Values are keys/URLs without sed metacharacters (prt_[A-Za-z0-9_-]+ or http://…).
+    sed -i -E "s|^$1=.*$|$1=$2|" "$ENV_FILE"
+  else
+    printf '%s=%s\n' "$1" "$2" >>"$ENV_FILE"
+  fi
+}
+
+if [ -z "$tenant_key" ] && [ -z "$(env_get PAIRROT_TENANT_KEY)" ]; then
+  echo "==> root tenant already existed and .env.local has no tenant key: issuing a new one"
+  tenant_key="$(pairrot_admin keys issue --root "$ROOT_ID" --purpose tenant --label eventor-local --operator eventor-bootstrap </dev/null | sed -nE 's/.*(prt_[A-Za-z0-9_-]+).*/\1/p' | head -n1)"
+fi
+if [ -z "$mgmt_key" ] && [ -z "$(env_get PAIRROT_MANAGEMENT_KEY)" ]; then
+  echo "==> root tenant already existed and .env.local has no management key: issuing a new one"
+  mgmt_key="$(pairrot_admin keys issue --root "$ROOT_ID" --purpose management --label eventor-local --operator eventor-bootstrap </dev/null | sed -nE 's/.*(prt_[A-Za-z0-9_-]+).*/\1/p' | head -n1)"
+fi
+
+env_set PAIRROT_BASE_URL "http://pairrot:8080"
+[ -n "$tenant_key" ] && env_set PAIRROT_TENANT_KEY "$tenant_key"
+[ -n "$mgmt_key" ] && env_set PAIRROT_MANAGEMENT_KEY "$mgmt_key"
+
+echo "==> start pairrot"
+dc up -d pairrot
+
+echo
+echo "Pairrot API:  http://localhost:8090  (from containers: http://pairrot:8080)"
+echo "Written to:   backend/.env.local   (PAIRROT_BASE_URL, PAIRROT_MANAGEMENT_KEY, PAIRROT_TENANT_KEY)"
+[ -n "$(env_get PAIRROT_MANAGEMENT_KEY)" ] && [ -n "$(env_get PAIRROT_TENANT_KEY)" ] || { echo "WARNING: a key is still missing in $ENV_FILE" >&2; exit 1; }

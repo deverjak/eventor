@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Creates and migrates the integration-test database for one token: eventor_test_<token>.
+#
+#   bin/test-db identity        # then: docker compose exec -e TEST_TOKEN=identity php vendor/bin/phpunit --testsuite integration
+#
+# Parallel agents use different tokens and therefore never share a database or a compiled test container.
+# Re-running drops and recreates the database (fast, a clean slate after schema changes).
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+token="${1:-${TEST_TOKEN:-default}}"
+if ! [[ "$token" =~ ^[a-z0-9]+$ ]]; then
+  echo "Token must match [a-z0-9]+ (got '$token')." >&2
+  exit 1
+fi
+db="eventor_test_${token}"
+
+ensure_stack_base
+recreate_database "$db"
+php_run sh -c "APP_ENV=test TEST_TOKEN='$token' php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration" | tail -n 3
+
+echo "Test database $db is ready. Run tests with TEST_TOKEN=$token (see backend/README.md)."

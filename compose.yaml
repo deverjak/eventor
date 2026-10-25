@@ -1,0 +1,201 @@
+# Eventor local stack. Everything runs in Docker; PHP is not installed on the host.
+#
+#   docker compose up -d --build        whole stack (installs composer deps on first start)
+#   docker compose exec php bin/console ...
+#
+# Host ports: php 8080 | php-api 8081 | postgres 5434 (POSTGRES_HOST_PORT) | smtp4dev 5000 |
+#             minio 9000 (S3) / 9001 (console) | pairrot 8090.
+# Local port clashes: put overrides in a git-ignored compose.override.yaml (see backend/README.md).
+name: eventor
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+    target: dev
+  image: eventor-backend:dev
+  working_dir: /app
+  restart: unless-stopped
+  # The FrankenPHP image ships a healthcheck against Caddy's admin API, which Caddyfile turns off; web services
+  # define their own (below), workers have none.
+  healthcheck:
+    disable: true
+  depends_on: &backend-depends
+    postgres: { condition: service_healthy }
+    deps: { condition: service_completed_successfully }
+    migrate: { condition: service_completed_successfully }
+    migrate-api: { condition: service_completed_successfully }
+  environment: &backend-env
+    APP_ENV: dev
+    APP_DEBUG: "1"
+    # Defaults for the developer stack; the app role has no DDL rights, the owner role runs migrations.
+    DATABASE_URL: postgresql://eventor_app:eventor_app@postgres:5432/eventor?serverVersion=17&charset=utf8
+    DATABASE_MIGRATIONS_URL: postgresql://eventor_owner:eventor_owner@postgres:5432/eventor?serverVersion=17&charset=utf8
+
+# Environment of the black-box API stack (php-api, worker-api, migrate-api): own database, production-like debug off.
+x-api-env: &api-env
+  <<: *backend-env
+  APP_DEBUG: "0"
+  # The black-box suite logs in many times from one IP: raise the throttling limits.
+  LOGIN_MAX_ATTEMPTS: "1000"
+  LOGIN_GLOBAL_MAX_ATTEMPTS: "10000"
+  DATABASE_URL: postgresql://eventor_app:eventor_app@postgres:5432/eventor_api?serverVersion=17&charset=utf8
+  DATABASE_MIGRATIONS_URL: postgresql://eventor_owner:eventor_owner@postgres:5432/eventor_api?serverVersion=17&charset=utf8
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_HOST_PORT:-5434}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventor"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  # One-shot: installs composer dependencies into the shared `vendor` volume.
+  deps:
+    <<: *backend
+    restart: "no"
+    depends_on: {}
+    command: ["composer", "install", "--no-interaction", "--prefer-dist"]
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-deps:/app/var
+
+  # One-shot: brings the dev database `eventor` (and the black-box database `eventor_api`) to the latest schema.
+  migrate:
+    <<: *backend
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+      deps: { condition: service_completed_successfully }
+    command: ["php", "bin/console", "doctrine:migrations:migrate", "--no-interaction", "--allow-no-migration"]
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-deps:/app/var
+
+  migrate-api:
+    <<: *backend
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+      deps: { condition: service_completed_successfully }
+    command: ["php", "bin/console", "doctrine:migrations:migrate", "--no-interaction", "--allow-no-migration"]
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-deps:/app/var
+    environment: *api-env
+
+  php:
+    <<: *backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-php:/app/var
+      - ./docker/php/Caddyfile:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(false === @file_get_contents('http://127.0.0.1/api/health/live') ? 1 : 0);"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 5s
+
+  worker:
+    <<: *backend
+    command: ["php", "bin/console", "messenger:consume", "--all", "--exclude-receivers=failed", "--time-limit=3600", "--memory-limit=256M", "-vv"]
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-worker:/app/var
+
+  # Same image, separate database and worker-mode FrankenPHP: the target of the black-box API tests
+  # (backend/tests/Api, bin/api-test). Code edits need `docker compose restart php-api worker-api`.
+  php-api:
+    <<: *backend
+    command: ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile.worker", "--adapter", "caddyfile"]
+    ports:
+      - "8081:80"
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-api:/app/var
+      - ./docker/php/Caddyfile.worker:/etc/caddy/Caddyfile.worker:ro
+    healthcheck: &web-healthcheck
+      test: ["CMD", "php", "-r", "exit(false === @file_get_contents('http://127.0.0.1/api/health/live') ? 1 : 0);"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 5s
+    environment: *api-env
+
+  worker-api:
+    <<: *backend
+    command: ["php", "bin/console", "messenger:consume", "--all", "--exclude-receivers=failed", "--time-limit=3600", "--memory-limit=256M", "-vv"]
+    volumes:
+      - ./backend:/app
+      - vendor:/app/vendor
+      - var-worker-api:/app/var
+    environment: *api-env
+
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    restart: unless-stopped
+    ports:
+      - "5000:80"
+
+  # S3 API for media and legal documents. The official minio/minio images are no longer published (Docker Hub and Quay),
+  # so this uses the frozen Bitnami legacy build of MinIO; it creates the buckets itself (MINIO_DEFAULT_BUCKETS).
+  minio:
+    image: bitnamilegacy/minio:latest
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: eventor
+      MINIO_ROOT_PASSWORD: eventor-secret
+      MINIO_DEFAULT_BUCKETS: eventor-media,eventor-media-test
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/bitnami/minio/data
+
+  # Real Pairrot, built from its own repository (read-only for us). First start: bin/pairrot-bootstrap.
+  pairrot:
+    build:
+      context: ${PAIRROT_PATH:-../chytre-digital/pairrot}
+      dockerfile: Dockerfile
+    image: eventor-pairrot:local
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Pairrot: Host=postgres;Port=5432;Database=pairrot;Username=pairrot;Password=pairrot
+      # Webhook targets on plain HTTP in the compose network (host:port as Pairrot compares them).
+      Webhooks__AllowedLocalDestinations__0: php-api:80
+      Webhooks__AllowedLocalDestinations__1: php:80
+      Matching__AllowTestEvidence: "true"
+    ports:
+      - "8090:8080"
+
+volumes:
+  pgdata:
+  miniodata:
+  vendor:
+  var-deps:
+  var-php:
+  var-worker:
+  var-api:
+  var-worker-api:

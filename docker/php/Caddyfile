@@ -1,0 +1,12 @@
+# Classic (non-worker) mode: every request boots a fresh kernel, so code edits apply immediately.
+# Used by the `php` dev service. See Caddyfile.worker for the long-running mode.
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+	php_server
+}

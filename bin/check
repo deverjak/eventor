@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Everything that must be green before a change is "done": code style, PHPStan (max), deptrac, container warmup
+# (compiler passes = architecture checks), unit and integration tests.
+#
+#   bin/check                 # all steps, TEST_TOKEN defaults to "check"
+#   bin/check --fix           # let php-cs-fixer rewrite the files instead of only reporting
+#   bin/check --fast          # skip the database-backed suites (cs, phpstan, deptrac, warmup, unit)
+#   TEST_TOKEN=identity bin/check
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+fix=0; fast=0
+for arg in "$@"; do
+  case "$arg" in
+    --fix) fix=1 ;;
+    --fast) fast=1 ;;
+    *) echo "Unknown option $arg" >&2; exit 2 ;;
+  esac
+done
+token="${TEST_TOKEN:-check}"
+
+ensure_stack_base
+step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+run() { php_run sh -c "$*"; }
+
+step "php-cs-fixer"
+if [ "$fix" = 1 ]; then run 'vendor/bin/php-cs-fixer fix --diff'; else run 'vendor/bin/php-cs-fixer fix --dry-run --diff'; fi
+
+step "phpstan (level max)"
+run 'php bin/console cache:warmup -q && vendor/bin/phpstan analyse --memory-limit=1G --no-progress'
+
+step "deptrac"
+run 'php bin/deptrac-layers --check && vendor/bin/deptrac analyse --no-progress'
+
+step "container warmup (ModuleBoundaryPass, IntegrationEventRoutingPass, PermissionMatrixPass)"
+run 'APP_ENV=prod APP_DEBUG=0 php bin/console cache:warmup --env=prod -q && APP_ENV=test php bin/console cache:warmup --env=test -q && php bin/console lint:container -q'
+
+step "unit tests"
+run 'vendor/bin/phpunit --testsuite unit'
+
+if [ "$fast" = 0 ]; then
+  step "database eventor_test_${token}"
+  "$ROOT/bin/test-db" "$token"
+  step "integration tests (incl. architecture)"
+  run "TEST_TOKEN=$token vendor/bin/phpunit --testsuite integration"
+  step "scenario tests"
+  run "TEST_TOKEN=$token vendor/bin/phpunit --testsuite scenario"
+fi
+
+printf '\n\033[1;32mAll checks passed.\033[0m (API black-box suite: bin/api-test)\n'

@@ -6,6 +6,7 @@ namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\Hydrate;
 use Eventor\Catalog\Contract\ActivitySnapshot;
 use Eventor\Catalog\Contract\ActivitySummary;
 use Eventor\Catalog\Contract\EventCatalog;
@@ -33,13 +34,13 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * no tenant. A draft is invisible here.
  */
 #[AsAlias(EventCatalog::class)]
-final readonly class CatalogEventCatalog implements EventCatalog
+final readonly class EventCatalogQuery implements EventCatalog
 {
     private const string EVENT_COLUMNS = 'id, organizer_id, slug, name, timezone, starts_at, ends_at, publication_state, registration_state, registration_opens_at, registration_closes_at, age_reference_date, capacity_bucket_id, payment_rules, venues, price_list_version';
 
     public function __construct(
         private Connection $connection,
-        private PublishedFormReader $forms,
+        private PublishedFormQuery $forms,
     ) {}
 
     public function resolvePublishedSlug(OrganizerId $organizer, string $eventSlug): EventId

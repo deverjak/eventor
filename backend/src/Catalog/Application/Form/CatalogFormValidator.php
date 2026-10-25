@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Eventor\Catalog\Application\Form;
 
-use Eventor\Catalog\Application\Query\PublishedFormReader;
+use Eventor\Catalog\Application\Query\PublishedFormQuery;
 use Eventor\Catalog\Contract\AnswerScope;
 use Eventor\Catalog\Contract\Exception\FormValidationFailed;
 use Eventor\Catalog\Contract\FormSelection;
@@ -34,7 +34,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final readonly class CatalogFormValidator implements FormValidator
 {
     public function __construct(
-        private PublishedFormReader $forms,
+        private PublishedFormQuery $forms,
         private AnswerConstraintBuilder $builder,
         private FieldTypeRegistry $types,
         private ValidatorInterface $validator,

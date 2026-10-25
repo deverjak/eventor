@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Eventor\Tests\Unit\Catalog;
 
 use Eventor\Catalog\Application\Form\CatalogFormValidator;
-use Eventor\Catalog\Application\Query\PublishedFormReader;
-use Eventor\Catalog\Application\Query\StoredFormVersion;
+use Eventor\Catalog\Application\Query\PublishedFormQuery;
+use Eventor\Catalog\Application\Query\View\PublishedFormVersionView;
 use Eventor\Catalog\Contract\AnswerScope;
 use Eventor\Catalog\Contract\AnswerSetInput;
 use Eventor\Catalog\Contract\Exception\FormValidationFailed;
@@ -175,8 +175,8 @@ final class AnswerValidationTest extends TestCase
 
     private function validatorFor(FormSchema $schema): CatalogFormValidator
     {
-        $stored = new StoredFormVersion($this->version, EventId::generate(), 1, new \DateTimeImmutable('2026-10-25'), $schema->sha256(), $schema);
-        $forms = $this->createStub(PublishedFormReader::class);
+        $stored = new PublishedFormVersionView($this->version, EventId::generate(), 1, new \DateTimeImmutable('2026-10-25'), $schema->sha256(), $schema);
+        $forms = self::createStub(PublishedFormQuery::class);
         $forms->method('version')->willReturn($stored);
 
         return new CatalogFormValidator($forms, $this->kit->builder, $this->kit->registry, $this->kit->validator);

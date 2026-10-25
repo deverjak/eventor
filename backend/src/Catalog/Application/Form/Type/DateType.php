@@ -36,7 +36,8 @@ final class DateType extends AbstractFieldType
         if (\is_int($c['maxAge'] ?? null)) {
             // The oldest allowed person is still younger than maxAge + 1 on the reference day.
             $now = \DateTimeImmutable::createFromInterface($this->clock->now())->setTime(0, 0);
-            $on = null === $reference ? $now : (\DateTimeImmutable::createFromFormat('!Y-m-d', $reference) ?: $now);
+            $parsed = null === $reference ? false : \DateTimeImmutable::createFromFormat('!Y-m-d', $reference);
+            $on = false === $parsed ? $now : $parsed;
             $constraints[] = new Assert\GreaterThan(
                 $on->modify(\sprintf('-%d years', $c['maxAge'] + 1))->format('Y-m-d'),
                 message: \sprintf('The maximum age is %d years.', $c['maxAge']),

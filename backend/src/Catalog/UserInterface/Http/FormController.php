@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Eventor\Catalog\UserInterface\Http;
 
 use Eventor\Catalog\Application\Form\EditDraftForm;
-use Eventor\Catalog\Application\Form\FieldTypeCatalog;
 use Eventor\Catalog\Application\Form\PublishFormVersion;
 use Eventor\Catalog\Application\Query\AdminFormQuery;
+use Eventor\Catalog\Application\Query\FieldTypeCatalogQuery;
 use Eventor\Identity\Contract\Attribute\CurrentOrganizer;
 use Eventor\Identity\Contract\Attribute\RequiresPermission;
 use Eventor\Identity\Contract\OrganizerView;
@@ -32,7 +32,7 @@ final class FormController extends AbstractController
     public function __construct(
         private readonly CommandBus $commands,
         private readonly AdminFormQuery $forms,
-        private readonly FieldTypeCatalog $fieldTypes,
+        private readonly FieldTypeCatalogQuery $fieldTypes,
     ) {}
 
     #[Route('/api/admin/org/{orgSlug}/events/{eventId}/form', name: 'api_admin_form_overview', methods: ['GET'], requirements: ['eventId' => Requirement::UUID])]

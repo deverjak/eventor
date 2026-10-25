@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\FormSchemaPresenter;
+use Eventor\Catalog\Application\Presenter\Hydrate;
+use Eventor\Catalog\Application\Query\View\FormOverviewView;
+use Eventor\Catalog\Application\Query\View\FormVersionSummaryView;
+use Eventor\Catalog\Application\Query\View\FormVersionView;
 use Eventor\Catalog\Contract\Exception\EventNotFound;
-use Eventor\Catalog\Contract\Exception\FormVersionNotFound;
+use Eventor\Catalog\Domain\Exception\FormVersionNotFoundByNumber;
 use Eventor\Catalog\Domain\Form\FormSchema;
 use Eventor\Shared\Domain\Id\EventId;
 use Eventor\Shared\Domain\Id\OrganizerId;
@@ -23,11 +28,9 @@ final readonly class AdminFormQuery
     ) {}
 
     /**
-     * @return array{draft: array<string, mixed>|null, published: array<string, mixed>|null, versions: list<array<string, mixed>>}
-     *
      * @throws EventNotFound
      */
-    public function overview(OrganizerId $organizer, EventId $event): array
+    public function overview(OrganizerId $organizer, EventId $event): FormOverviewView
     {
         $this->assertEvent($organizer, $event);
         $rows = $this->connection->fetchAllAssociative(
@@ -40,32 +43,23 @@ final readonly class AdminFormQuery
         $published = null;
         $versions = [];
         foreach ($rows as $row) {
-            $isPublished = null !== $row['published_at'];
-            if ($isPublished) {
-                $versions[] = [
-                    'id' => Hydrate::string($row, 'id'),
-                    'number' => Hydrate::int($row, 'number'),
-                    'publishedAt' => Hydrate::time($row, 'published_at'),
-                    'schemaSha256' => Hydrate::nullableString($row, 'schema_sha256'),
-                ];
-            }
-            if (!$isPublished && null === $draft) {
-                $draft = $this->view($row);
-            }
-            if ($isPublished && null === $published) {
-                $published = $this->view($row);
+            $publishedAt = Hydrate::nullableTime($row, 'published_at');
+            if (null !== $publishedAt) {
+                $versions[] = new FormVersionSummaryView(Hydrate::string($row, 'id'), Hydrate::int($row, 'number'), $publishedAt, Hydrate::nullableString($row, 'schema_sha256'));
+                $published ??= $this->view($row);
+            } else {
+                $draft ??= $this->view($row);
             }
         }
 
-        return ['draft' => $draft, 'published' => $published, 'versions' => $versions];
+        return new FormOverviewView($draft, $published, $versions);
     }
 
     /**
-     * @return array<string, mixed>
-     *
-     * @throws FormVersionNotFound
+     * @throws EventNotFound
+     * @throws FormVersionNotFoundByNumber
      */
-    public function version(OrganizerId $organizer, EventId $event, int $number): array
+    public function version(OrganizerId $organizer, EventId $event, int $number): FormVersionView
     {
         $this->assertEvent($organizer, $event);
         $row = $this->connection->fetchAssociative(
@@ -82,20 +76,20 @@ final readonly class AdminFormQuery
 
     /**
      * @param array<string, mixed> $row
-     *
-     * @return array<string, mixed>
      */
-    private function view(array $row): array
+    private function view(array $row): FormVersionView
     {
-        return [
-            'id' => Hydrate::string($row, 'id'),
-            'number' => Hydrate::int($row, 'number'),
-            'published' => null !== $row['published_at'],
-            'publishedAt' => Hydrate::nullableTime($row, 'published_at'),
-            'schemaSha256' => Hydrate::nullableString($row, 'schema_sha256'),
-            'updatedAt' => Hydrate::time($row, 'updated_at'),
-            'fields' => $this->presenter->fields(FormSchema::fromArray(Hydrate::json($row, 'schema'))),
-        ];
+        $publishedAt = Hydrate::nullableTime($row, 'published_at');
+
+        return new FormVersionView(
+            Hydrate::string($row, 'id'),
+            Hydrate::int($row, 'number'),
+            null !== $publishedAt,
+            $publishedAt,
+            Hydrate::nullableString($row, 'schema_sha256'),
+            Hydrate::time($row, 'updated_at'),
+            $this->presenter->fields(FormSchema::fromArray(Hydrate::json($row, 'schema'))),
+        );
     }
 
     private function assertEvent(OrganizerId $organizer, EventId $event): void

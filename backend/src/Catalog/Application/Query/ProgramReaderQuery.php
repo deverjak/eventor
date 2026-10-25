@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\Hydrate;
 use Eventor\Catalog\Contract\Exception\EventNotFound;
 use Eventor\Catalog\Contract\Exception\ProgramItemNotFound;
 use Eventor\Catalog\Contract\ProgramItemView;
@@ -21,7 +22,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * audience decides what is visible: the public sees public items, participants see both kinds.
  */
 #[AsAlias(ProgramReader::class)]
-final readonly class CatalogProgramReader implements ProgramReader
+final readonly class ProgramReaderQuery implements ProgramReader
 {
     private const string COLUMNS = 'id, event_id, activity_id, title, description, location, starts_at, ends_at, visibility';
 

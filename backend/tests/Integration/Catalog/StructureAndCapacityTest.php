@@ -6,6 +6,7 @@ namespace Eventor\Tests\Integration\Catalog;
 
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Tests\Support\Catalog\CatalogHttpTestCase;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * EVT-05, EVT-06 and CAP-06: activities, variants with prices (Money), the capacity limits and their buckets.
@@ -16,7 +17,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $base = self::BASE.'/events/'.$eventId;
 
         $activityId = $this->addActivity($eventId, 'Trail 10 km', ['minAge' => 15, 'startsAt' => '2026-11-21T11:00:00+01:00', 'description' => 'Trať 10 km']);
@@ -24,22 +25,22 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
 
         $event = $this->request('GET', $base);
         self::assertIsArray($event);
-        $activity = $event['activities'][0];
-        self::assertSame(15, $activity['minAge']);
-        self::assertFalse($activity['implicit']);
-        self::assertSame(40000, $activity['variants'][0]['price']['minor']);
-        self::assertSame('CZK', $activity['variants'][0]['price']['currency']);
-        self::assertSame(150, $activity['variants'][0]['capacityLimit']);
+        $activity = Json::at($event, 'activities.0');
+        self::assertSame(15, Json::at($activity, 'minAge'));
+        self::assertFalse(Json::at($activity, 'implicit'));
+        self::assertSame(40000, Json::at($activity, 'variants.0.price.minor'));
+        self::assertSame('CZK', Json::at($activity, 'variants.0.price.currency'));
+        self::assertSame(150, Json::at($activity, 'variants.0.capacityLimit'));
         self::assertSame(1, $event['priceListVersion'], 'a draft has no price list history');
 
-        $this->request('PUT', $base.'/activities/'.$activityId, ['name' => 'Trail 10 km (hlavní)', 'minAge' => 16, 'minorsOnly' => false], ['If-Match' => (string) $activity['version']]);
+        $this->request('PUT', $base.'/activities/'.$activityId, ['name' => 'Trail 10 km (hlavní)', 'minAge' => 16, 'minorsOnly' => false], ['If-Match' => Json::str($activity, 'version')]);
         self::assertResponseIsSuccessful();
         $this->request('PUT', $base.'/variants/'.$variantId, ['name' => 'Jednotlivec', 'price' => ['minor' => 45000, 'currency' => 'CZK']]);
         $updated = $this->request('GET', $base);
         self::assertIsArray($updated);
-        self::assertSame('Trail 10 km (hlavní)', $updated['activities'][0]['name']);
-        self::assertSame(16, $updated['activities'][0]['minAge']);
-        self::assertSame(45000, $updated['activities'][0]['variants'][0]['price']['minor']);
+        self::assertSame('Trail 10 km (hlavní)', Json::at($updated, 'activities.0.name'));
+        self::assertSame(16, Json::at($updated, 'activities.0.minAge'));
+        self::assertSame(45000, Json::at($updated, 'activities.0.variants.0.price.minor'));
         self::assertSame(1, $updated['priceListVersion']);
 
         $this->request('DELETE', $base.'/variants/'.$variantId);
@@ -57,7 +58,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $activityId = $this->addActivity($eventId, 'Canicross');
         $this->addVariant($eventId, $activityId, 'Jednotlivec', 35000);
         $this->addVariant($eventId, $activityId, 'Štěně', 15000);
@@ -72,13 +73,13 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $activityId = $this->addActivity($eventId, 'Trail');
         $base = self::BASE.'/events/'.$eventId;
 
         $this->request('POST', $base.'/activities', ['name' => '', 'minAge' => 200]);
         $problem = $this->assertProblem(422, 'validation_failed');
-        self::assertEqualsCanonicalizing(['name', 'minAge'], array_column($problem['violations'], 'path'));
+        self::assertEqualsCanonicalizing(['name', 'minAge'], Json::column(Json::at($problem, 'violations'), 'path'));
 
         $this->request('POST', $base.'/activities', ['name' => 'Špatný věk', 'minAge' => 18, 'maxAge' => 15]);
         $this->assertProblem(422, 'invalid_catalog_data');
@@ -99,7 +100,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $activityId = $this->addActivity($eventId, 'Trail');
 
         $this->request('PUT', self::BASE.'/events/'.$eventId.'/activities/'.$activityId, ['name' => 'Trail 2'], ['If-Match' => '5']);
@@ -112,7 +113,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
         $this->addMember('obsluha@example.test', Role::CheckIn);
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $activityId = $this->addActivity($eventId, 'Trail');
 
         $this->login('obsluha@example.test');
@@ -136,7 +137,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
         self::assertIsArray($result);
         self::assertFalse($result['belowOccupancy']);
         self::assertSame([], $result['warnings']);
-        self::assertSame(80, $result['event']['activities'][0]['variants'][0]['capacityLimit']);
+        self::assertSame(80, Json::at($result, 'event.activities.0.variants.0.capacityLimit'));
         self::assertSame(0, $this->dbInt('SELECT count(*) FROM registration.capacity_bucket WHERE event_id = ?', [$event['eventId']]), 'no bucket before the publication');
 
         $this->request('POST', $base, ['scope' => 'event', 'limit' => 200]);
@@ -155,7 +156,7 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
 
         $this->request('POST', $base, ['scope' => 'variant', 'scopeId' => $event['trailVariant'], 'limit' => 120]);
         $problem = $this->assertProblem(422, 'invalid_catalog_data');
-        self::assertStringContainsString('reason', (string) $problem['detail']);
+        self::assertStringContainsString('reason', Json::str($problem, 'detail'));
 
         $result = $this->request('POST', $base, ['scope' => 'variant', 'scopeId' => $event['trailVariant'], 'limit' => 120, 'reason' => 'Větší louka']);
 
@@ -163,10 +164,10 @@ final class StructureAndCapacityTest extends CatalogHttpTestCase
         self::assertIsArray($result);
         self::assertFalse($result['belowOccupancy']);
         self::assertSame(120, $this->dbInt($bucket($event['trailVariant'])));
-        self::assertSame(120, $result['event']['activities'][0]['variants'][0]['capacityLimit']);
+        self::assertSame(120, Json::at($result, 'event.activities.0.variants.0.capacityLimit'));
         $audit = $this->dbRow("SELECT reason, before, after FROM audit.audit_entry WHERE action = 'capacity.limit_changed' AND entity_id = ?", [$event['trailVariant']]);
         self::assertSame('Větší louka', $audit['reason']);
-        self::assertSame(['limit' => 100], json_decode((string) $audit['before'], true));
+        self::assertSame(['limit' => 100], json_decode(Json::str($audit, 'before'), true));
     }
 
     public function test_lowering_below_the_occupancy_warns_and_never_cancels(): void

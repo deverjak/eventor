@@ -21,6 +21,9 @@ final readonly class SelectionContext
         public array $answers = [],
     ) {}
 
+    /**
+     * @param array<string, mixed> $answers
+     */
     public function withAnswers(array $answers): self
     {
         return new self($this->activityIds, $this->variantIds, $answers);

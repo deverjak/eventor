@@ -9,6 +9,7 @@ use Eventor\Catalog\Domain\Event\CapacityLimitChanged;
 use Eventor\Catalog\Domain\Event\EventDetailsUpdated;
 use Eventor\Catalog\Domain\Event\FormVersionFrozen;
 use Eventor\Catalog\Domain\Event\PriceListChanged;
+use Eventor\Catalog\Domain\Event\ProgramItemModified;
 use Eventor\Catalog\Domain\Exception\FormVersionImmutable;
 use Eventor\Catalog\Domain\Exception\InvalidCatalogData;
 use Eventor\Catalog\Domain\Exception\NewsPostAlreadyPublished;
@@ -34,6 +35,7 @@ use Eventor\Shared\Domain\Id\ProgramItemId;
 use Eventor\Shared\Domain\Money;
 use Eventor\Shared\Domain\Payment\PaymentMethod;
 use Eventor\Tests\Support\Catalog\Build;
+use Eventor\Tests\Support\Catalog\Json;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -99,7 +101,7 @@ final class CatalogDomainTest extends TestCase
     {
         $rules = new PaymentRules([PaymentMethod::BankTransfer, PaymentMethod::Cash], 14, 72, true, false, new \DateTimeImmutable('2026-11-01 00:00:00+00:00'));
 
-        $again = PaymentRules::fromArray(json_decode(json_encode($rules->toArray(), \JSON_THROW_ON_ERROR), true, 512, \JSON_THROW_ON_ERROR));
+        $again = PaymentRules::fromArray(Json::arr(json_decode(json_encode($rules->toArray(), \JSON_THROW_ON_ERROR), true, 512, \JSON_THROW_ON_ERROR)));
 
         self::assertEquals($rules, $again);
         self::assertTrue($again->allows(PaymentMethod::Cash));
@@ -244,6 +246,7 @@ final class CatalogDomainTest extends TestCase
         $item = ProgramItem::create(ProgramItemId::generate(), OrganizerId::generate(), EventId::generate(), $details, true, true, Build::now());
 
         [$recorded] = $item->releaseEvents();
+        self::assertInstanceOf(ProgramItemModified::class, $recorded);
         self::assertSame('added', $recorded->action);
         self::assertTrue($recorded->important);
         self::assertTrue($recorded->live);

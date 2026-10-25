@@ -5,7 +5,17 @@ declare(strict_types=1);
 namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\Hydrate;
+use Eventor\Catalog\Application\Query\View\ActivityDetailView;
+use Eventor\Catalog\Application\Query\View\ContactView;
+use Eventor\Catalog\Application\Query\View\EventDetailView;
+use Eventor\Catalog\Application\Query\View\EventListItemView;
+use Eventor\Catalog\Application\Query\View\EventListView;
+use Eventor\Catalog\Application\Query\View\PaymentRulesView;
+use Eventor\Catalog\Application\Query\View\VariantDetailView;
 use Eventor\Catalog\Contract\Exception\EventNotFound;
+use Eventor\Catalog\Contract\VenueView;
+use Eventor\Catalog\Domain\Structure\PaymentRules;
 use Eventor\Shared\Domain\Currency;
 use Eventor\Shared\Domain\Id\EventId;
 use Eventor\Shared\Domain\Id\OrganizerId;
@@ -19,10 +29,7 @@ final readonly class AdminEventQuery
 {
     public function __construct(private Connection $connection) {}
 
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public function list(OrganizerId $organizer): array
+    public function list(OrganizerId $organizer): EventListView
     {
         $rows = $this->connection->fetchAllAssociative(
             'SELECT id, slug, name, short_description, starts_at, ends_at, visibility, publication_state, registration_state, version
@@ -30,26 +37,24 @@ final readonly class AdminEventQuery
             ['organizer' => $organizer->toString()],
         );
 
-        return array_map(static fn(array $row): array => [
-            'id' => Hydrate::string($row, 'id'),
-            'slug' => Hydrate::string($row, 'slug'),
-            'name' => Hydrate::string($row, 'name'),
-            'shortDescription' => Hydrate::nullableString($row, 'short_description'),
-            'startsAt' => Hydrate::time($row, 'starts_at'),
-            'endsAt' => Hydrate::time($row, 'ends_at'),
-            'visibility' => Hydrate::string($row, 'visibility'),
-            'publicationState' => Hydrate::string($row, 'publication_state'),
-            'registrationState' => Hydrate::string($row, 'registration_state'),
-            'version' => Hydrate::int($row, 'version'),
-        ], $rows);
+        return new EventListView(array_map(static fn(array $row): EventListItemView => new EventListItemView(
+            Hydrate::string($row, 'id'),
+            Hydrate::string($row, 'slug'),
+            Hydrate::string($row, 'name'),
+            Hydrate::nullableString($row, 'short_description'),
+            Hydrate::time($row, 'starts_at'),
+            Hydrate::time($row, 'ends_at'),
+            Hydrate::string($row, 'visibility'),
+            Hydrate::string($row, 'publication_state'),
+            Hydrate::string($row, 'registration_state'),
+            Hydrate::int($row, 'version'),
+        ), $rows));
     }
 
     /**
-     * @return array<string, mixed>
-     *
      * @throws EventNotFound
      */
-    public function detail(OrganizerId $organizer, EventId $event): array
+    public function detail(OrganizerId $organizer, EventId $event): EventDetailView
     {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM catalog.event WHERE organizer_id = :organizer AND id = :id',
@@ -64,19 +69,19 @@ final readonly class AdminEventQuery
             'SELECT * FROM catalog.variant WHERE organizer_id = :organizer AND event_id = :event ORDER BY position, created_at',
             ['organizer' => $organizer->toString(), 'event' => $event->toString()],
         ) as $variant) {
-            $variants[Hydrate::string($variant, 'activity_id')][] = [
-                'id' => Hydrate::string($variant, 'id'),
-                'name' => Hydrate::string($variant, 'name'),
-                'price' => new Money(Hydrate::int($variant, 'price_minor'), Currency::from(trim(Hydrate::string($variant, 'price_currency')))),
-                'capacityLimit' => Hydrate::nullableInt($variant, 'capacity_limit'),
-                'capacityBucketId' => Hydrate::string($variant, 'capacity_bucket_id'),
-                'capacityUnit' => Hydrate::string($variant, 'capacity_unit'),
-                'teamSize' => Hydrate::nullableInt($variant, 'team_size'),
-                'minAge' => Hydrate::nullableInt($variant, 'min_age'),
-                'maxAge' => Hydrate::nullableInt($variant, 'max_age'),
-                'position' => Hydrate::int($variant, 'position'),
-                'version' => Hydrate::int($variant, 'version'),
-            ];
+            $variants[Hydrate::string($variant, 'activity_id')][] = new VariantDetailView(
+                Hydrate::string($variant, 'id'),
+                Hydrate::string($variant, 'name'),
+                new Money(Hydrate::int($variant, 'price_minor'), Currency::from(trim(Hydrate::string($variant, 'price_currency')))),
+                Hydrate::nullableInt($variant, 'capacity_limit'),
+                Hydrate::string($variant, 'capacity_bucket_id'),
+                Hydrate::string($variant, 'capacity_unit'),
+                Hydrate::nullableInt($variant, 'team_size'),
+                Hydrate::nullableInt($variant, 'min_age'),
+                Hydrate::nullableInt($variant, 'max_age'),
+                Hydrate::int($variant, 'position'),
+                Hydrate::int($variant, 'version'),
+            );
         }
 
         $activities = [];
@@ -84,60 +89,68 @@ final readonly class AdminEventQuery
             'SELECT * FROM catalog.activity WHERE organizer_id = :organizer AND event_id = :event ORDER BY position, created_at',
             ['organizer' => $organizer->toString(), 'event' => $event->toString()],
         ) as $activity) {
-            $activities[] = [
-                'id' => Hydrate::string($activity, 'id'),
-                'name' => Hydrate::string($activity, 'name'),
-                'description' => Hydrate::nullableString($activity, 'description'),
-                'location' => Hydrate::nullableString($activity, 'location'),
-                'startsAt' => Hydrate::nullableTime($activity, 'starts_at'),
-                'endsAt' => Hydrate::nullableTime($activity, 'ends_at'),
-                'implicit' => Hydrate::bool($activity, 'implicit'),
-                'registrationState' => Hydrate::string($activity, 'registration_state'),
-                'registrationOpensAt' => Hydrate::nullableTime($activity, 'registration_opens_at'),
-                'registrationClosesAt' => Hydrate::nullableTime($activity, 'registration_closes_at'),
-                'minAge' => Hydrate::nullableInt($activity, 'min_age'),
-                'maxAge' => Hydrate::nullableInt($activity, 'max_age'),
-                'minorsOnly' => Hydrate::bool($activity, 'minors_only'),
-                'capacityLimit' => Hydrate::nullableInt($activity, 'capacity_limit'),
-                'capacityBucketId' => Hydrate::string($activity, 'capacity_bucket_id'),
-                'position' => Hydrate::int($activity, 'position'),
-                'version' => Hydrate::int($activity, 'version'),
-                'variants' => $variants[Hydrate::string($activity, 'id')] ?? [],
-            ];
+            $activities[] = new ActivityDetailView(
+                Hydrate::string($activity, 'id'),
+                Hydrate::string($activity, 'name'),
+                Hydrate::nullableString($activity, 'description'),
+                Hydrate::nullableString($activity, 'location'),
+                Hydrate::nullableTime($activity, 'starts_at'),
+                Hydrate::nullableTime($activity, 'ends_at'),
+                Hydrate::bool($activity, 'implicit'),
+                Hydrate::string($activity, 'registration_state'),
+                Hydrate::nullableTime($activity, 'registration_opens_at'),
+                Hydrate::nullableTime($activity, 'registration_closes_at'),
+                Hydrate::nullableInt($activity, 'min_age'),
+                Hydrate::nullableInt($activity, 'max_age'),
+                Hydrate::bool($activity, 'minors_only'),
+                Hydrate::nullableInt($activity, 'capacity_limit'),
+                Hydrate::string($activity, 'capacity_bucket_id'),
+                Hydrate::int($activity, 'position'),
+                Hydrate::int($activity, 'version'),
+                $variants[Hydrate::string($activity, 'id')] ?? [],
+            );
         }
 
-        return [
-            'id' => Hydrate::string($row, 'id'),
-            'slug' => Hydrate::string($row, 'slug'),
-            'name' => Hydrate::string($row, 'name'),
-            'shortDescription' => Hydrate::nullableString($row, 'short_description'),
-            'description' => Hydrate::nullableString($row, 'description'),
-            'coverImageUrl' => Hydrate::nullableString($row, 'cover_image_url'),
-            'contact' => [
-                'name' => Hydrate::nullableString($row, 'contact_name'),
-                'email' => Hydrate::nullableString($row, 'contact_email'),
-                'phone' => Hydrate::nullableString($row, 'contact_phone'),
-            ],
-            'timezone' => Hydrate::string($row, 'timezone'),
-            'startsAt' => Hydrate::time($row, 'starts_at'),
-            'endsAt' => Hydrate::time($row, 'ends_at'),
-            'ageReferenceDate' => Hydrate::nullableString($row, 'age_reference_date'),
-            'visibility' => Hydrate::string($row, 'visibility'),
-            'publicationState' => Hydrate::string($row, 'publication_state'),
-            'registrationState' => Hydrate::string($row, 'registration_state'),
-            'registrationOpensAt' => Hydrate::nullableTime($row, 'registration_opens_at'),
-            'registrationClosesAt' => Hydrate::nullableTime($row, 'registration_closes_at'),
-            'capacityLimit' => Hydrate::nullableInt($row, 'capacity_limit'),
-            'capacityBucketId' => Hydrate::string($row, 'capacity_bucket_id'),
-            'paymentRules' => Hydrate::json($row, 'payment_rules'),
-            'venues' => Hydrate::json($row, 'venues'),
-            'priceListVersion' => Hydrate::int($row, 'price_list_version'),
-            'cancellationReason' => Hydrate::nullableString($row, 'cancellation_reason'),
-            'createdAt' => Hydrate::time($row, 'created_at'),
-            'updatedAt' => Hydrate::time($row, 'updated_at'),
-            'version' => Hydrate::int($row, 'version'),
-            'activities' => $activities,
-        ];
+        $rules = PaymentRules::fromArray(Hydrate::json($row, 'payment_rules'));
+        $venues = [];
+        foreach (Hydrate::json($row, 'venues') as $venue) {
+            if (\is_array($venue)) {
+                $venues[] = new VenueView(
+                    \is_string($venue['name'] ?? null) ? $venue['name'] : '',
+                    \is_string($venue['address'] ?? null) ? $venue['address'] : null,
+                    \is_string($venue['mapUrl'] ?? null) ? $venue['mapUrl'] : null,
+                );
+            }
+        }
+
+        return new EventDetailView(
+            Hydrate::string($row, 'id'),
+            Hydrate::string($row, 'slug'),
+            Hydrate::string($row, 'name'),
+            Hydrate::nullableString($row, 'short_description'),
+            Hydrate::nullableString($row, 'description'),
+            Hydrate::nullableString($row, 'cover_image_url'),
+            new ContactView(Hydrate::nullableString($row, 'contact_name'), Hydrate::nullableString($row, 'contact_email'), Hydrate::nullableString($row, 'contact_phone')),
+            Hydrate::string($row, 'timezone'),
+            Hydrate::time($row, 'starts_at'),
+            Hydrate::time($row, 'ends_at'),
+            Hydrate::nullableString($row, 'age_reference_date'),
+            Hydrate::string($row, 'visibility'),
+            Hydrate::string($row, 'publication_state'),
+            Hydrate::string($row, 'registration_state'),
+            Hydrate::nullableTime($row, 'registration_opens_at'),
+            Hydrate::nullableTime($row, 'registration_closes_at'),
+            Hydrate::nullableInt($row, 'capacity_limit'),
+            Hydrate::string($row, 'capacity_bucket_id'),
+            self::rulesView($rules),
+            $venues,
+            Hydrate::int($row, 'price_list_version'),
+            Hydrate::nullableString($row, 'cancellation_reason'),
+            Hydrate::time($row, 'created_at'),
+            Hydrate::time($row, 'updated_at'),
+            Hydrate::int($row, 'version'),
+            $activities,
+        );
     }
 
     public function exists(OrganizerId $organizer, EventId $event): bool
@@ -145,6 +158,19 @@ final readonly class AdminEventQuery
         return false !== $this->connection->fetchOne(
             'SELECT 1 FROM catalog.event WHERE organizer_id = :organizer AND id = :id',
             ['organizer' => $organizer->toString(), 'id' => $event->toString()],
+        );
+    }
+
+    private static function rulesView(PaymentRules $rules): PaymentRulesView
+    {
+        return new PaymentRulesView(
+            array_map(static fn($method): string => $method->value, $rules->methods),
+            $rules->dueDays,
+            $rules->holdTtlHours,
+            $rules->autoRestoreOnLatePayment,
+            $rules->selfServiceCancellationAllowed,
+            $rules->selfServiceCancellationDeadline?->format(\DATE_ATOM),
+            $rules->currency->value,
         );
     }
 }

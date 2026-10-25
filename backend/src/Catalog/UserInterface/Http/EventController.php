@@ -72,7 +72,7 @@ final class EventController extends AbstractController
     )]
     public function list(#[CurrentOrganizer] OrganizerView $organizer): JsonResponse
     {
-        return $this->json(['items' => $this->events->list($organizer->id)]);
+        return $this->json($this->events->list($organizer->id));
     }
 
     #[Route('/api/admin/org/{orgSlug}/events/{eventId}', name: 'api_admin_event_detail', methods: ['GET'], requirements: ['eventId' => Requirement::UUID])]

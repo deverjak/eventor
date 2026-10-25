@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\Hydrate;
 use Eventor\Catalog\Contract\Exception\NewsPostNotFound;
 use Eventor\Catalog\Contract\NewsPostView;
 use Eventor\Catalog\Contract\NewsReader;
@@ -17,7 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * Content of a published news post, for the e-mail broadcast (PRG-04). A draft is "not found".
  */
 #[AsAlias(NewsReader::class)]
-final readonly class CatalogNewsReader implements NewsReader
+final readonly class NewsReaderQuery implements NewsReader
 {
     public function __construct(private Connection $connection) {}
 

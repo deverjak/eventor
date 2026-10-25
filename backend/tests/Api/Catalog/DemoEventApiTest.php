@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Tests\Api\Catalog;
 
 use Eventor\Tests\Api\Support\ApiFixtures;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * The acceptance path of the Catalog API for the frontend (F1): the demo event "Borský podzimní víkend 2026" is built
@@ -22,7 +23,7 @@ final class DemoEventApiTest extends CatalogApiTestCase
         $this->assertProblem($this->anonymous()->get($public), 404, 'event_not_found');
         $draft = $this->ok($this->owner->get(self::ORG.'/events/'.$eventId));
         self::assertSame('draft', $draft['publicationState']);
-        self::assertCount(5, $draft['activities']);
+        self::assertCount(5, Json::arr($draft, 'activities'));
 
         // Publication: form version 1 and the buckets of the event, five activities and five variants.
         $published = $this->ok($this->owner->post(self::ORG.'/events/'.$eventId.'/publish'));
@@ -35,34 +36,34 @@ final class DemoEventApiTest extends CatalogApiTestCase
         self::assertSame('published', $page['publicationState']);
         self::assertSame('not_open', $page['registrationState']);
         self::assertSame(['cash'], $page['paymentMethods']);
-        self::assertSame('Borský park', $page['venues'][0]['name']);
+        self::assertSame('Borský park', Json::at($page, 'venues.0.name'));
         self::assertSame(
             ['Trail 5 km', 'Trail 10 km', 'Týmová štafeta', 'Dětský závod', 'Canicross'],
-            array_column($page['activities'], 'name'),
+            Json::column(Json::at($page, 'activities'), 'name'),
         );
 
-        $byName = array_column($page['activities'], null, 'name');
-        self::assertSame(30000, $byName['Trail 5 km']['variants'][0]['price']['minor']);
-        self::assertSame('CZK', $byName['Trail 5 km']['variants'][0]['price']['currency']);
-        self::assertSame(15, $byName['Trail 10 km']['minAge']);
-        self::assertSame(4, $byName['Týmová štafeta']['variants'][0]['teamSize']);
-        self::assertSame('team', $byName['Týmová štafeta']['variants'][0]['capacityUnit']);
-        self::assertTrue($byName['Dětský závod']['minorsOnly']);
-        self::assertSame(10000, $byName['Dětský závod']['variants'][0]['price']['minor']);
+        $byName = Json::column(Json::at($page, 'activities'), null, 'name');
+        self::assertSame(30000, Json::at($byName, 'Trail 5 km.variants.0.price.minor'));
+        self::assertSame('CZK', Json::at($byName, 'Trail 5 km.variants.0.price.currency'));
+        self::assertSame(15, Json::at($byName, 'Trail 10 km.minAge'));
+        self::assertSame(4, Json::at($byName, 'Týmová štafeta.variants.0.teamSize'));
+        self::assertSame('team', Json::at($byName, 'Týmová štafeta.variants.0.capacityUnit'));
+        self::assertTrue(Json::at($byName, 'Dětský závod.minorsOnly'));
+        self::assertSame(10000, Json::at($byName, 'Dětský závod.variants.0.price.minor'));
 
         // The public form schema is the published version 1.
-        self::assertSame($published['formVersionId'], $page['form']['formVersionId']);
-        $fields = array_column($page['form']['fields'], null, 'key');
-        self::assertSame([$demo['activities']['canicross']], $fields['dog_name']['activityIds']);
-        self::assertSame([$demo['variants']['relay']], $fields['team_name']['variantIds']);
-        self::assertSame('guardian_email', $fields['guardian_email']['semantic']);
-        self::assertSame('legal_requirement', $fields['health_declaration']['type']);
+        self::assertSame(Json::at($published, 'formVersionId'), Json::at($page, 'form.formVersionId'));
+        $fields = Json::column(Json::at($page, 'form.fields'), null, 'key');
+        self::assertSame([Json::at($demo, 'activities.canicross')], Json::at($fields, 'dog_name.activityIds'));
+        self::assertSame([Json::at($demo, 'variants.relay')], Json::at($fields, 'team_name.variantIds'));
+        self::assertSame('guardian_email', Json::at($fields, 'guardian_email.semantic'));
+        self::assertSame('legal_requirement', Json::at($fields, 'health_declaration.type'));
 
         // The free places have a light endpoint of their own (PUB-03).
         $availability = $this->ok($this->anonymous()->get($public.'/availability'));
         self::assertSame($demo['eventId'], $availability['eventId']);
-        self::assertArrayHasKey($demo['variants']['trail5'], $availability['variants']);
-        self::assertSame(['status' => 'available', 'available' => 100], $availability['variants'][$demo['variants']['trail5']]);
+        self::assertArrayHasKey(Json::str($demo, 'variants.trail5'), Json::arr($availability, 'variants'));
+        self::assertSame(['status' => 'available', 'available' => 100], Json::at($availability, 'variants.'.Json::str($demo, 'variants.trail5')));
         $this->assertProblem($this->anonymous()->get($public.'x/availability'), 404, 'event_not_found');
 
         // The same form has its own endpoint.
@@ -72,11 +73,11 @@ final class DemoEventApiTest extends CatalogApiTestCase
         // The admin sees the frozen version and no draft.
         $overview = $this->ok($this->owner->get(self::ORG.'/events/'.$eventId.'/form'));
         self::assertNull($overview['draft']);
-        self::assertSame(1, $overview['published']['number']);
+        self::assertSame(1, Json::at($overview, 'published.number'));
 
         // The public list shows the event.
         $list = $this->ok($this->anonymous()->get('/api/public/orgs/'.ApiFixtures::ALPHA['slug'].'/events'));
-        self::assertContains($demo['slug'], array_column($list['items'], 'slug'));
+        self::assertContains(Json::at($demo, 'slug'), Json::column(Json::at($list, 'items'), 'slug'));
     }
 
     public function test_opening_the_registration_is_visible_on_the_public_page(): void
@@ -89,16 +90,16 @@ final class DemoEventApiTest extends CatalogApiTestCase
 
         $page = $this->ok($this->anonymous()->get('/api/public/orgs/'.ApiFixtures::ALPHA['slug'].'/events/'.$demo['slug']));
         self::assertSame('open', $page['registrationState']);
-        self::assertSame(['open', 'open', 'open', 'open', 'open'], array_column($page['activities'], 'registrationState'));
-        foreach ($page['activities'] as $activity) {
-            self::assertArrayHasKey('availability', $activity);
+        self::assertSame(['open', 'open', 'open', 'open', 'open'], Json::column(Json::at($page, 'activities'), 'registrationState'));
+        foreach (Json::arr($page, 'activities') as $activity) {
+            self::assertArrayHasKey('availability', Json::arr($activity));
         }
     }
 
     public function test_publishing_an_incomplete_event_is_a_422_with_the_broken_rules(): void
     {
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $activity = $this->addActivity($eventId, 'Trail 5 km');
         $this->addVariant($eventId, $activity, 'Jednotlivec', 30000);
         $this->addActivity($eventId, 'Prázdná aktivita');
@@ -106,7 +107,7 @@ final class DemoEventApiTest extends CatalogApiTestCase
         $response = $this->owner->post(self::ORG.'/events/'.$eventId.'/publish');
 
         $problem = $this->assertProblem($response, 422, 'event_not_publishable');
-        $codes = array_column($problem['violations'], 'code');
+        $codes = Json::column(Json::at($problem, 'violations'), 'code');
         self::assertContains('activity_without_variant', $codes);
         self::assertContains('payment_method_required', $codes);
         self::assertSame('draft', $this->ok($this->owner->get(self::ORG.'/events/'.$eventId))['publicationState']);
@@ -119,14 +120,14 @@ final class DemoEventApiTest extends CatalogApiTestCase
 
         $problem = $this->assertProblem($this->owner->post(self::ORG.'/events/'.$demo['eventId'].'/publish'), 422, 'event_not_publishable');
 
-        self::assertSame(['transfer_requires_pairrot'], array_column($problem['violations'], 'code'));
+        self::assertSame(['transfer_requires_pairrot'], Json::column(Json::at($problem, 'violations'), 'code'));
     }
 
     public function test_an_invalid_form_schema_is_a_422_with_every_violation(): void
     {
         $created = $this->createEvent();
 
-        $response = $this->owner->request('PUT', self::ORG.'/events/'.$created['eventId'].'/form/draft', ['fields' => [
+        $response = $this->owner->request('PUT', self::ORG.'/events/'.Json::str($created, 'eventId').'/form/draft', ['fields' => [
             ['key' => 'ok_field', 'type' => 'short_text', 'label' => 'V pořádku', 'scope' => 'person'],
             ['key' => 'ok_field', 'type' => 'short_text', 'label' => 'Dvakrát', 'scope' => 'person'],
             ['key' => 'size', 'type' => 'single_choice', 'label' => 'Velikost', 'scope' => 'person'],
@@ -135,8 +136,8 @@ final class DemoEventApiTest extends CatalogApiTestCase
 
         $problem = $this->assertProblem($response, 422, 'form_schema_invalid');
         $byPath = [];
-        foreach ($problem['violations'] as $violation) {
-            $byPath[$violation['path']] = $violation['code'];
+        foreach (Json::arr($problem, 'violations') as $violation) {
+            $byPath[Json::str($violation, 'path')] = Json::at($violation, 'code');
         }
         self::assertSame('duplicate_key', $byPath['fields[1].key']);
         self::assertSame('invalid_value', $byPath['fields[2].constraints.choices']);

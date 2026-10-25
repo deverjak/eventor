@@ -49,6 +49,7 @@ use Eventor\Shared\Domain\Id\VariantId;
 use Eventor\Shared\Domain\Money;
 use Eventor\Shared\Domain\Payment\PaymentMethod;
 use Eventor\Shared\Infrastructure\Doctrine\TenantFilterSynchronizer;
+use Eventor\Tests\Support\Catalog\Json;
 use Eventor\Tests\Support\IntegrationTestCase;
 
 /**
@@ -92,7 +93,7 @@ final class CatalogFacadesTest extends IntegrationTestCase
         $draft = $this->commandBus()->dispatch(new CreateEvent($this->organizer, new CreateEventInput($this->detailsInput('Koncept'), 'koncept')));
         $this->leaveTenant();
         \assert(\is_array($draft));
-        $draftId = EventId::fromString((string) $draft['eventId']);
+        $draftId = EventId::fromString(Json::str($draft, 'eventId'));
 
         foreach ([
             fn() => $catalog->resolvePublishedSlug($this->organizer, 'koncept'),
@@ -159,7 +160,9 @@ final class CatalogFacadesTest extends IntegrationTestCase
         $snapshot = $this->service(EventCatalog::class)->registrationSnapshot($this->organizer, $this->event);
 
         self::assertSame(2, $snapshot->priceListVersion);
-        self::assertCount(2, $snapshot->activity($this->trail)?->variants ?? []);
+        $trail = $snapshot->activity($this->trail);
+        self::assertNotNull($trail);
+        self::assertCount(2, $trail->variants);
     }
 
     public function test_summaries_list_published_events_with_venue_and_activities(): void
@@ -299,18 +302,18 @@ final class CatalogFacadesTest extends IntegrationTestCase
         $bus = $this->commandBus();
         $created = $bus->dispatch(new CreateEvent($this->organizer, new CreateEventInput($this->detailsInput('Borský podzimní víkend 2026'), 'vikend', 'multi')));
         \assert(\is_array($created));
-        $this->event = EventId::fromString((string) $created['eventId']);
+        $this->event = EventId::fromString(Json::str($created, 'eventId'));
 
         $trail = $bus->dispatch(new AddActivity($this->event, new ActivityInput('Trail 10 km', minAge: 15, startsAt: new \DateTimeImmutable('2026-11-21T11:00:00+01:00'), capacityLimit: 150)));
         $canicross = $bus->dispatch(new AddActivity($this->event, new ActivityInput('Canicross', startsAt: new \DateTimeImmutable('2026-11-22T10:00:00+01:00'))));
         \assert(\is_array($trail) && \is_array($canicross));
-        $this->trail = ActivityId::fromString((string) $trail['activityId']);
-        $this->canicross = ActivityId::fromString((string) $canicross['activityId']);
+        $this->trail = ActivityId::fromString(Json::str($trail, 'activityId'));
+        $this->canicross = ActivityId::fromString(Json::str($canicross, 'activityId'));
         $variant = $bus->dispatch(new AddVariant($this->event, $this->trail, new VariantInput('Jednotlivec', Money::of(40000), null, null, null, 150)));
         $relay = $bus->dispatch(new AddVariant($this->event, $this->canicross, new VariantInput('Tým 4 os.', Money::of(120000), 4, null, null, 20)));
         \assert(\is_array($variant) && \is_array($relay));
-        $this->trailVariant = VariantId::fromString((string) $variant['variantId']);
-        $this->relayVariant = VariantId::fromString((string) $relay['variantId']);
+        $this->trailVariant = VariantId::fromString(Json::str($variant, 'variantId'));
+        $this->relayVariant = VariantId::fromString(Json::str($relay, 'variantId'));
 
         $bus->dispatch(new ConfigurePaymentRules($this->event, new PaymentRulesInput(['cash'], 14, 72, true)));
         $fields = [
@@ -332,7 +335,7 @@ final class CatalogFacadesTest extends IntegrationTestCase
 
         $published = $bus->dispatch(new PublishEvent($this->event));
         \assert(\is_array($published));
-        $this->formVersion = FormVersionId::fromString((string) $published['formVersionId']);
+        $this->formVersion = FormVersionId::fromString(Json::str($published, 'formVersionId'));
         $bus->dispatch(new ChangeRegistrationState($this->event, null, 'open'));
         $bus->dispatch(new ChangeRegistrationState($this->event, $this->trail, 'open'));
     }

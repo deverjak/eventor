@@ -64,7 +64,7 @@ abstract class CatalogHttpTestCase extends HttpTestCase
     /**
      * @param array<string, mixed> $detailsOverrides
      *
-     * @return array<string, mixed> the created ids
+     * @return array<array-key, mixed> the created ids
      */
     protected function createEvent(string $mode = 'multi', array $detailsOverrides = [], ?string $slug = null): array
     {
@@ -115,7 +115,7 @@ abstract class CatalogHttpTestCase extends HttpTestCase
     protected function createPublishableEvent(?string $slug = null): array
     {
         $created = $this->createEvent(slug: $slug);
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $trail = $this->addActivity($eventId, 'Trail 5 km', ['startsAt' => '2026-11-21T10:00:00+01:00', 'capacityLimit' => 100]);
         $relay = $this->addActivity($eventId, 'Týmová štafeta', ['startsAt' => '2026-11-21T14:00:00+01:00']);
         $trailVariant = $this->addVariant($eventId, $trail, 'Jednotlivec', 30000, 100);
@@ -123,7 +123,7 @@ abstract class CatalogHttpTestCase extends HttpTestCase
         $this->request('PUT', self::BASE.'/events/'.$eventId.'/payment-rules', ['methods' => ['cash'], 'dueDays' => 7, 'holdTtlHours' => 48]);
         self::assertResponseIsSuccessful();
 
-        return ['eventId' => $eventId, 'slug' => (string) $created['slug'], 'trail' => $trail, 'relay' => $relay, 'trailVariant' => $trailVariant, 'relayVariant' => $relayVariant];
+        return ['eventId' => $eventId, 'slug' => Json::str($created, 'slug'), 'trail' => $trail, 'relay' => $relay, 'trailVariant' => $trailVariant, 'relayVariant' => $relayVariant];
     }
 
     protected function publish(string $eventId): void

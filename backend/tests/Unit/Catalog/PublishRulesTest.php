@@ -134,7 +134,7 @@ final class PublishRulesTest extends TestCase
 
     private function settings(OrganizerId $organizer, bool $connected): OrganizerSettings
     {
-        $settings = $this->createStub(OrganizerSettings::class);
+        $settings = self::createStub(OrganizerSettings::class);
         $settings->method('paymentSettings')->willReturn(new OrganizerPaymentSettings($organizer, $connected ? 'sub-1' : null, $connected ? 'conn-1' : null, null, $connected, true));
 
         return $settings;

@@ -18,8 +18,8 @@ final class MultiChoiceType extends ChoiceType
             new Assert\Choice(
                 choices: $this->values($field),
                 multiple: true,
-                min: $this->intConstraint($field, 'minChoices'),
-                max: $this->intConstraint($field, 'maxChoices'),
+                min: $this->nonNegativeInt($field, 'minChoices'),
+                max: $this->positiveInt($field, 'maxChoices'),
             ),
         ];
     }

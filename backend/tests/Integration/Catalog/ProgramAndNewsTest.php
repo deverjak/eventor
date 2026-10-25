@@ -6,6 +6,7 @@ namespace Eventor\Tests\Integration\Catalog;
 
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Tests\Support\Catalog\CatalogHttpTestCase;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * PRG-01..04: the program (optionally linked to activities), the importance of a change, and news posts with their
@@ -27,22 +28,22 @@ final class ProgramAndNewsTest extends CatalogHttpTestCase
 
         $list = $this->request('GET', $base);
         self::assertIsArray($list);
-        self::assertSame(['Rozcvička', 'Start Trailu 5 km'], array_column($list['items'], 'title'));
-        self::assertSame($event['trail'], $list['items'][1]['activityId']);
-        self::assertSame('participants', $list['items'][0]['visibility']);
-        self::assertSame('Petr', $list['items'][0]['responsible']);
+        self::assertSame(['Rozcvička', 'Start Trailu 5 km'], Json::column(Json::at($list, 'items'), 'title'));
+        self::assertSame(Json::at($event, 'trail'), Json::at($list, 'items.1.activityId'));
+        self::assertSame('participants', Json::at($list, 'items.0.visibility'));
+        self::assertSame('Petr', Json::at($list, 'items.0.responsible'));
 
-        $updated = $this->request('PUT', $base.'/'.$added['programItemId'], ['title' => 'Rozcvička (nová)', 'startsAt' => '2026-11-21T07:45:00+01:00', 'important' => true]);
+        $updated = $this->request('PUT', $base.'/'.Json::str($added, 'programItemId'), ['title' => 'Rozcvička (nová)', 'startsAt' => '2026-11-21T07:45:00+01:00', 'important' => true]);
         self::assertResponseIsSuccessful();
         self::assertIsArray($updated);
-        self::assertSame('Rozcvička (nová)', $updated['items'][0]['title']);
-        self::assertSame('public', $updated['items'][0]['visibility']);
+        self::assertSame('Rozcvička (nová)', Json::at($updated, 'items.0.title'));
+        self::assertSame('public', Json::at($updated, 'items.0.visibility'));
 
-        $this->request('DELETE', $base.'/'.$added['programItemId'], null);
+        $this->request('DELETE', $base.'/'.Json::str($added, 'programItemId'), null);
         self::assertResponseIsSuccessful();
         $after = $this->request('GET', $base);
         self::assertIsArray($after);
-        self::assertCount(1, $after['items']);
+        self::assertCount(1, Json::arr($after, 'items'));
         self::assertSame(1, $this->dbInt("SELECT count(*) FROM audit.audit_entry WHERE action = 'program_item.removed' AND entity_id = ?", [$added['programItemId']]));
         self::assertSame(4, $this->dbInt("SELECT count(*) FROM audit.audit_entry WHERE entity_type = 'program_item' AND (after->>'eventId') = ?", [$event['eventId']]));
     }
@@ -55,7 +56,7 @@ final class ProgramAndNewsTest extends CatalogHttpTestCase
 
         $this->request('POST', $base, ['title' => '', 'startsAt' => '2026-11-21T07:30:00+01:00', 'visibility' => 'secret']);
         $problem = $this->assertProblem(422, 'validation_failed');
-        self::assertEqualsCanonicalizing(['title', 'visibility'], array_column($problem['violations'], 'path'));
+        self::assertEqualsCanonicalizing(['title', 'visibility'], Json::column(Json::at($problem, 'violations'), 'path'));
 
         $this->request('POST', $base, ['title' => 'Pozpátku', 'startsAt' => '2026-11-21T09:00:00+01:00', 'endsAt' => '2026-11-21T08:00:00+01:00']);
         $this->assertProblem(422, 'invalid_catalog_data');
@@ -93,23 +94,23 @@ final class ProgramAndNewsTest extends CatalogHttpTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertIsArray($draft);
         self::assertFalse($draft['published']);
-        self::assertSame($this->owner['userAccountId'], $draft['items'][0]['authorAccountId']);
-        self::assertTrue($draft['items'][0]['broadcast']);
+        self::assertSame($this->owner['userAccountId'], Json::at($draft, 'items.0.authorAccountId'));
+        self::assertTrue(Json::at($draft, 'items.0.broadcast'));
 
-        $this->request('PUT', $base.'/'.$draft['newsPostId'], ['title' => 'Start je v 11:15', 'body' => 'Opravujeme.', 'priority' => 5]);
+        $this->request('PUT', $base.'/'.Json::str($draft, 'newsPostId'), ['title' => 'Start je v 11:15', 'body' => 'Opravujeme.', 'priority' => 5]);
         self::assertResponseIsSuccessful();
 
-        $this->request('POST', $base.'/'.$draft['newsPostId'].'/publish');
+        $this->request('POST', $base.'/'.Json::str($draft, 'newsPostId').'/publish');
         self::assertResponseIsSuccessful();
         $list = $this->request('GET', $base);
         self::assertIsArray($list);
-        self::assertTrue($list['items'][0]['published']);
-        self::assertSame('Start je v 11:15', $list['items'][0]['title']);
-        self::assertSame(5, $list['items'][0]['priority']);
+        self::assertTrue(Json::at($list, 'items.0.published'));
+        self::assertSame('Start je v 11:15', Json::at($list, 'items.0.title'));
+        self::assertSame(5, Json::at($list, 'items.0.priority'));
 
-        $this->request('POST', $base.'/'.$draft['newsPostId'].'/publish');
+        $this->request('POST', $base.'/'.Json::str($draft, 'newsPostId').'/publish');
         $this->assertProblem(409, 'news_post_already_published');
-        $this->request('PUT', $base.'/'.$draft['newsPostId'], ['title' => 'Zpět', 'body' => 'x']);
+        $this->request('PUT', $base.'/'.Json::str($draft, 'newsPostId'), ['title' => 'Zpět', 'body' => 'x']);
         $this->assertProblem(409, 'news_post_already_published');
         self::assertSame(1, $this->dbInt("SELECT count(*) FROM audit.audit_entry WHERE action = 'news_post.published' AND entity_id = ?", [$draft['newsPostId']]));
     }
@@ -127,7 +128,7 @@ final class ProgramAndNewsTest extends CatalogHttpTestCase
 
         $this->request('POST', $base, ['title' => '', 'body' => '', 'priority' => 99]);
         $problem = $this->assertProblem(422, 'validation_failed');
-        self::assertEqualsCanonicalizing(['title', 'body', 'priority'], array_column($problem['violations'], 'path'));
+        self::assertEqualsCanonicalizing(['title', 'body', 'priority'], Json::column(Json::at($problem, 'violations'), 'path'));
 
         $this->request('POST', $base.'/0197b4a0-0000-7000-8000-000000000000/publish');
         $this->assertProblem(404, 'news_post_not_found');

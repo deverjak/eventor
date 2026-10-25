@@ -44,4 +44,24 @@ abstract class AbstractFieldType implements ConstraintFactory, AnswerNormalizer,
 
         return \is_int($value) ? $value : null;
     }
+
+    /**
+     * @return int<0, max>|null
+     */
+    protected function nonNegativeInt(FieldDefinition $field, string $name): ?int
+    {
+        $value = $this->intConstraint($field, $name);
+
+        return null === $value ? null : max(0, $value);
+    }
+
+    /**
+     * @return int<1, max>|null
+     */
+    protected function positiveInt(FieldDefinition $field, string $name): ?int
+    {
+        $value = $this->intConstraint($field, $name);
+
+        return null === $value ? null : max(1, $value);
+    }
 }

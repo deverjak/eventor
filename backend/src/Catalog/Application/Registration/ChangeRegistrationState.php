@@ -14,7 +14,7 @@ use Eventor\Shared\Domain\Id\EventId;
 final readonly class ChangeRegistrationState
 {
     /**
-     * @param 'open'|'pause'|'resume'|'close' $transition
+     * @param string $transition one of open, pause, resume, close (checked by the route)
      */
     public function __construct(
         public EventId $eventId,

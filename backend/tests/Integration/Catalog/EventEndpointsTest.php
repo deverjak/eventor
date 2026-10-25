@@ -6,6 +6,7 @@ namespace Eventor\Tests\Integration\Catalog;
 
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Tests\Support\Catalog\CatalogHttpTestCase;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * EVT-01, EVT-02, EVT-10, EVT-11 over HTTP: happy paths and the 401 / 403 / 404 / 409 / 422 guards.
@@ -26,20 +27,20 @@ final class EventEndpointsTest extends CatalogHttpTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertIsArray($created);
         self::assertSame('borsky-podzimni-vikend-2026', $created['slug']);
-        $event = $this->request('GET', self::BASE.'/events/'.$created['eventId']);
+        $event = $this->request('GET', self::BASE.'/events/'.Json::str($created, 'eventId'));
         self::assertIsArray($event);
         self::assertSame('draft', $event['publicationState']);
         self::assertSame('not_open', $event['registrationState']);
         self::assertSame('public', $event['visibility']);
         self::assertSame(1, $event['version']);
-        self::assertCount(1, $event['activities']);
-        self::assertTrue($event['activities'][0]['implicit']);
-        self::assertSame('Borský podzimní víkend 2026', $event['activities'][0]['name']);
-        $variant = $event['activities'][0]['variants'][0];
-        self::assertSame(30000, $variant['price']['minor']);
-        self::assertSame(100, $variant['capacityLimit']);
-        self::assertSame('seat', $variant['capacityUnit']);
-        self::assertSame('Borský park', $event['venues'][0]['name']);
+        self::assertCount(1, Json::arr($event, 'activities'));
+        self::assertTrue(Json::at($event, 'activities.0.implicit'));
+        self::assertSame('Borský podzimní víkend 2026', Json::at($event, 'activities.0.name'));
+        $variant = Json::at($event, 'activities.0.variants.0');
+        self::assertSame(30000, Json::at($variant, 'price.minor'));
+        self::assertSame(100, Json::at($variant, 'capacityLimit'));
+        self::assertSame('seat', Json::at($variant, 'capacityUnit'));
+        self::assertSame('Borský park', Json::at($event, 'venues.0.name'));
         self::assertSame(1, $this->dbInt("SELECT count(*) FROM audit.audit_entry WHERE action = 'event.created' AND entity_id = ?", [$created['eventId']]));
         self::assertSame(1, $this->dbInt('SELECT count(*) FROM catalog.form_version WHERE event_id = ? AND published_at IS NULL AND number = 1', [$created['eventId']]));
     }
@@ -54,7 +55,7 @@ final class EventEndpointsTest extends CatalogHttpTestCase
         self::assertSame('borsky-podzimni-vikend-2026', $first['slug']);
         self::assertSame('borsky-podzimni-vikend-2026-2', $second['slug']);
         self::assertNull($first['activityId']);
-        $event = $this->request('GET', self::BASE.'/events/'.$first['eventId']);
+        $event = $this->request('GET', self::BASE.'/events/'.Json::str($first, 'eventId'));
         self::assertIsArray($event);
         self::assertSame([], $event['activities']);
     }
@@ -79,7 +80,7 @@ final class EventEndpointsTest extends CatalogHttpTestCase
 
         self::assertResponseIsSuccessful();
         self::assertIsArray($list);
-        self::assertSame(['Jarní', 'Podzimní'], array_column($list['items'], 'name'));
+        self::assertSame(['Jarní', 'Podzimní'], Json::column(Json::at($list, 'items'), 'name'));
     }
 
     public function test_validation_errors_are_422_with_violations(): void
@@ -88,7 +89,7 @@ final class EventEndpointsTest extends CatalogHttpTestCase
 
         $this->request('POST', self::BASE.'/events', ['details' => self::details(['name' => '', 'contactEmail' => 'not-mail', 'visibility' => 'secret'])]);
         $problem = $this->assertProblem(422, 'validation_failed');
-        $paths = array_column($problem['violations'], 'path');
+        $paths = Json::column(Json::at($problem, 'violations'), 'path');
         self::assertContains('details.name', $paths);
         self::assertContains('details.contactEmail', $paths);
         self::assertContains('details.visibility', $paths);
@@ -104,7 +105,7 @@ final class EventEndpointsTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $uri = self::BASE.'/events/'.$created['eventId'];
+        $uri = self::BASE.'/events/'.Json::str($created, 'eventId');
 
         $updated = $this->request('PUT', $uri, self::details(['name' => 'Nový název', 'visibility' => 'unlisted']), ['If-Match' => '1']);
         self::assertResponseIsSuccessful();
@@ -126,18 +127,18 @@ final class EventEndpointsTest extends CatalogHttpTestCase
     {
         $this->login(self::OWNER);
         $created = $this->createEvent();
-        $uri = self::BASE.'/events/'.$created['eventId'].'/payment-rules';
+        $uri = self::BASE.'/events/'.Json::str($created, 'eventId').'/payment-rules';
 
         $event = $this->request('PUT', $uri, ['methods' => ['bank_transfer', 'cash'], 'dueDays' => 14, 'holdTtlHours' => 72, 'autoRestoreOnLatePayment' => true, 'selfServiceCancellationDeadline' => '2026-11-14T23:59:00+01:00']);
         self::assertResponseIsSuccessful();
         self::assertIsArray($event);
-        self::assertSame(['bank_transfer', 'cash'], $event['paymentRules']['methods']);
-        self::assertSame(14, $event['paymentRules']['dueDays']);
-        self::assertTrue($event['paymentRules']['autoRestoreOnLatePayment']);
+        self::assertSame(['bank_transfer', 'cash'], Json::at($event, 'paymentRules.methods'));
+        self::assertSame(14, Json::at($event, 'paymentRules.dueDays'));
+        self::assertTrue(Json::at($event, 'paymentRules.autoRestoreOnLatePayment'));
 
         $this->request('PUT', $uri, ['methods' => ['free'], 'dueDays' => 0]);
         $problem = $this->assertProblem(422, 'validation_failed');
-        self::assertContains('dueDays', array_column($problem['violations'], 'path'));
+        self::assertContains('dueDays', Json::column(Json::at($problem, 'violations'), 'path'));
     }
 
     public function test_anonymous_access_is_401(): void
@@ -158,14 +159,14 @@ final class EventEndpointsTest extends CatalogHttpTestCase
 
         $this->request('GET', self::BASE.'/events');
         self::assertResponseIsSuccessful();
-        $this->request('GET', self::BASE.'/events/'.$created['eventId']);
+        $this->request('GET', self::BASE.'/events/'.Json::str($created, 'eventId'));
         self::assertResponseIsSuccessful();
 
         $this->request('POST', self::BASE.'/events', ['details' => self::details()]);
         $this->assertProblem(403, 'forbidden');
-        $this->request('PUT', self::BASE.'/events/'.$created['eventId'], self::details());
+        $this->request('PUT', self::BASE.'/events/'.Json::str($created, 'eventId'), self::details());
         $this->assertProblem(403, 'forbidden');
-        $this->request('PUT', self::BASE.'/events/'.$created['eventId'].'/payment-rules', ['methods' => ['cash']]);
+        $this->request('PUT', self::BASE.'/events/'.Json::str($created, 'eventId').'/payment-rules', ['methods' => ['cash']]);
         $this->assertProblem(403, 'forbidden');
     }
 
@@ -206,6 +207,6 @@ final class EventEndpointsTest extends CatalogHttpTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertIsArray($created);
 
-        return (string) $created['eventId'];
+        return Json::str($created, 'eventId');
     }
 }

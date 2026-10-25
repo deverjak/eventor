@@ -17,17 +17,23 @@ final readonly class DoctrineFormVersionRepository implements FormVersionReposit
 
     public function draftOf(EventId $event): ?FormVersion
     {
-        return $this->em->createQuery('SELECT f FROM '.FormVersion::class.' f WHERE f.eventId = :event AND f.publishedAt IS NULL')
+        $draft = $this->em->createQuery('SELECT f FROM '.FormVersion::class.' f WHERE f.eventId = :event AND f.publishedAt IS NULL')
             ->setParameter('event', $event)
             ->getOneOrNullResult();
+        \assert(null === $draft || $draft instanceof FormVersion);
+
+        return $draft;
     }
 
     public function latestPublished(EventId $event): ?FormVersion
     {
-        return $this->em->createQuery('SELECT f FROM '.FormVersion::class.' f WHERE f.eventId = :event AND f.publishedAt IS NOT NULL ORDER BY f.number DESC')
+        $latest = $this->em->createQuery('SELECT f FROM '.FormVersion::class.' f WHERE f.eventId = :event AND f.publishedAt IS NOT NULL ORDER BY f.number DESC')
             ->setParameter('event', $event)
             ->setMaxResults(1)
             ->getOneOrNullResult();
+        \assert(null === $latest || $latest instanceof FormVersion);
+
+        return $latest;
     }
 
     public function highestNumber(EventId $event): int

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Eventor\Catalog\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Catalog\Application\Presenter\Hydrate;
+use Eventor\Catalog\Application\Query\View\PublishedFormVersionView;
 use Eventor\Catalog\Contract\Exception\EventNotFound;
 use Eventor\Catalog\Contract\Exception\FormVersionNotFound;
 use Eventor\Catalog\Domain\Form\FormSchema;
@@ -16,7 +18,7 @@ use Eventor\Shared\Domain\Id\OrganizerId;
  * Published form versions for other modules and the public zone. DBAL with an explicit organizer: callers have no
  * tenant (public requests, subscribers). A draft is never visible here.
  */
-readonly class PublishedFormReader
+readonly class PublishedFormQuery
 {
     private const string COLUMNS = 'id, event_id, number, published_at, schema_sha256, schema';
 
@@ -25,7 +27,7 @@ readonly class PublishedFormReader
     /**
      * @throws FormVersionNotFound
      */
-    public function version(OrganizerId $organizer, FormVersionId $version): StoredFormVersion
+    public function version(OrganizerId $organizer, FormVersionId $version): PublishedFormVersionView
     {
         $row = $this->connection->fetchAssociative(
             'SELECT '.self::COLUMNS.' FROM catalog.form_version WHERE organizer_id = :organizer AND id = :id AND published_at IS NOT NULL',
@@ -43,7 +45,7 @@ readonly class PublishedFormReader
      *
      * @throws EventNotFound when the event has no published form (it is a draft or unknown)
      */
-    public function current(OrganizerId $organizer, EventId $event): StoredFormVersion
+    public function current(OrganizerId $organizer, EventId $event): PublishedFormVersionView
     {
         $row = $this->connection->fetchAssociative(
             'SELECT '.self::COLUMNS.' FROM catalog.form_version
@@ -61,17 +63,15 @@ readonly class PublishedFormReader
     /**
      * @param array<string, mixed> $row
      */
-    private function hydrate(array $row): StoredFormVersion
+    private function hydrate(array $row): PublishedFormVersionView
     {
-        $schema = json_decode((string) $row['schema'], true, 512, \JSON_THROW_ON_ERROR);
-
-        return new StoredFormVersion(
-            FormVersionId::fromString((string) $row['id']),
-            EventId::fromString((string) $row['event_id']),
-            (int) $row['number'],
-            new \DateTimeImmutable((string) $row['published_at']),
-            (string) $row['schema_sha256'],
-            FormSchema::fromArray(\is_array($schema) ? $schema : []),
+        return new PublishedFormVersionView(
+            FormVersionId::fromString(Hydrate::string($row, 'id')),
+            EventId::fromString(Hydrate::string($row, 'event_id')),
+            Hydrate::int($row, 'number'),
+            Hydrate::time($row, 'published_at'),
+            Hydrate::string($row, 'schema_sha256'),
+            FormSchema::fromArray(Hydrate::json($row, 'schema')),
         );
     }
 }

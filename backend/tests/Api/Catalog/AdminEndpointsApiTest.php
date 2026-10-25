@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Eventor\Tests\Api\Catalog;
 
+use Eventor\Tests\Support\Catalog\Json;
+
 /**
  * One happy path and one error path for every admin endpoint of Catalog that the demo flow does not touch.
  */
@@ -13,15 +15,15 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
     {
         $slug = self::uniqueSlug();
         $created = $this->createEvent($slug, 'simple', ['name' => 'Jednoduchá akce']);
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
 
         $list = $this->ok($this->owner->get(self::ORG.'/events'));
-        self::assertContains($eventId, array_column($list['items'], 'id'));
+        self::assertContains($eventId, Json::column(Json::at($list, 'items'), 'id'));
 
         $event = $this->ok($this->owner->get(self::ORG.'/events/'.$eventId));
         self::assertSame($slug, $event['slug']);
-        self::assertCount(1, $event['activities']);
-        self::assertTrue($event['activities'][0]['implicit']);
+        self::assertCount(1, Json::arr($event, 'activities'));
+        self::assertTrue(Json::at($event, 'activities.0.implicit'));
         self::assertSame(1, $event['version']);
 
         $updated = $this->ok($this->owner->request('PUT', self::ORG.'/events/'.$eventId, self::details(['name' => 'Přejmenovaná akce', 'visibility' => 'unlisted']), ['If-Match' => '1']));
@@ -31,7 +33,7 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
         $this->assertProblem($this->owner->request('PUT', self::ORG.'/events/'.$eventId, self::details(['name' => ''])), 422, 'validation_failed');
 
         $rules = $this->ok($this->owner->request('PUT', self::ORG.'/events/'.$eventId.'/payment-rules', ['methods' => ['cash'], 'dueDays' => 10, 'holdTtlHours' => 24]));
-        self::assertSame(['cash'], $rules['paymentRules']['methods']);
+        self::assertSame(['cash'], Json::at($rules, 'paymentRules.methods'));
         $this->assertProblem($this->owner->request('PUT', self::ORG.'/events/'.$eventId.'/payment-rules', ['methods' => ['barter']]), 422, 'validation_failed');
 
         $this->assertProblem($this->owner->get(self::ORG.'/events/0197b4a0-0000-7000-8000-000000000000'), 404, 'event_not_found');
@@ -42,19 +44,19 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
     public function test_activities_variants_and_capacity(): void
     {
         $created = $this->createEvent();
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $base = self::ORG.'/events/'.$eventId;
         $activityId = $this->addActivity($eventId, 'Canicross', ['startsAt' => '2026-11-22T10:00:00+01:00']);
         $variantId = $this->addVariant($eventId, $activityId, 'Jednotlivec', 35000, 40);
 
         $updatedActivity = $this->ok($this->owner->request('PUT', $base.'/activities/'.$activityId, ['name' => 'Canicross 3 km', 'minAge' => 16]));
-        self::assertSame('Canicross 3 km', $updatedActivity['activities'][0]['name']);
+        self::assertSame('Canicross 3 km', Json::at($updatedActivity, 'activities.0.name'));
         $updatedVariant = $this->ok($this->owner->request('PUT', $base.'/variants/'.$variantId, ['name' => 'Jednotlivec', 'price' => ['minor' => 36000, 'currency' => 'CZK']]));
-        self::assertSame(36000, $updatedVariant['activities'][0]['variants'][0]['price']['minor']);
+        self::assertSame(36000, Json::at($updatedVariant, 'activities.0.variants.0.price.minor'));
 
         $capacity = $this->ok($this->owner->post($base.'/capacity', ['scope' => 'variant', 'scopeId' => $variantId, 'limit' => 60]));
         self::assertFalse($capacity['belowOccupancy']);
-        self::assertSame(60, $capacity['event']['activities'][0]['variants'][0]['capacityLimit']);
+        self::assertSame(60, Json::at($capacity, 'event.activities.0.variants.0.capacityLimit'));
 
         $this->assertProblem($this->owner->post($base.'/activities', ['name' => '']), 422, 'validation_failed');
         $this->assertProblem($this->owner->post($base.'/activities/0197b4a0-0000-7000-8000-000000000000/variants', ['name' => 'x', 'price' => ['minor' => 1, 'currency' => 'CZK']]), 404, 'activity_not_found');
@@ -100,7 +102,7 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
         $this->ok($this->owner->post($base.'/activities/'.$trail.'/registration/resume'));
         $closed = $this->ok($this->owner->post($base.'/registration/close', ['cascade' => true]));
         self::assertSame('closed', $closed['registrationState']);
-        self::assertSame(array_fill(0, 5, 'closed'), array_column($closed['activities'], 'registrationState'));
+        self::assertSame(array_fill(0, 5, 'closed'), Json::column(Json::at($closed, 'activities'), 'registrationState'));
     }
 
     public function test_an_event_is_cancelled_by_the_owner_with_a_reason_and_confirmation(): void
@@ -126,7 +128,7 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
     {
         $slug = self::uniqueSlug('minuly');
         $created = $this->createEvent($slug, 'multi', ['startsAt' => '2020-05-02T08:00:00+02:00', 'endsAt' => '2020-05-03T16:00:00+02:00']);
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
         $base = self::ORG.'/events/'.$eventId;
         $activity = $this->addActivity($eventId, 'Závod');
         $this->addVariant($eventId, $activity, 'Zdarma', 0);
@@ -148,7 +150,7 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
 
         $problem = $this->assertProblem($this->owner->post($base.'/complete'), 409, 'transition_not_allowed');
 
-        self::assertStringContainsString('has not ended', (string) $problem['detail']);
+        self::assertStringContainsString('has not ended', Json::str($problem, 'detail'));
     }
 
     public function test_form_versions_s17(): void
@@ -162,14 +164,14 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
         $fields = self::demoFormFields($demo['activities'], $demo['variants']);
         $fields[] = ['key' => 'emergency_phone', 'type' => 'phone', 'label' => 'Telefon pro nouzi', 'scope' => 'person', 'required' => true];
         $draft = $this->ok($this->owner->request('PUT', $base.'/draft', ['fields' => $fields]));
-        self::assertSame(2, $draft['draft']['number']);
-        self::assertSame(1, $draft['published']['number'], 'the published version is untouched');
+        self::assertSame(2, Json::at($draft, 'draft.number'));
+        self::assertSame(1, Json::at($draft, 'published.number'), 'the published version is untouched');
 
         self::assertSame(2, $this->ok($this->owner->post($base.'/publish'))['number']);
         $overview = $this->ok($this->owner->get($base));
-        self::assertSame([2, 1], array_column($overview['versions'], 'number'));
-        self::assertCount(14, $this->ok($this->owner->get($base.'/versions/1'))['fields']);
-        self::assertCount(15, $this->ok($this->owner->get($base.'/versions/2'))['fields']);
+        self::assertSame([2, 1], Json::column(Json::at($overview, 'versions'), 'number'));
+        self::assertCount(14, Json::arr($this->ok($this->owner->get($base.'/versions/1')), 'fields'));
+        self::assertCount(15, Json::arr($this->ok($this->owner->get($base.'/versions/2')), 'fields'));
         $this->assertProblem($this->owner->get($base.'/versions/3'), 404, 'form_version_not_found');
 
         $public = $this->ok($this->anonymous()->get('/api/public/orgs/api-alpha/events/'.$demo['slug'].'/form'));
@@ -180,8 +182,8 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
     {
         $catalog = $this->ok($this->owner->get(self::ORG.'/form-field-types'));
 
-        self::assertCount(11, $catalog['types']);
-        self::assertContains('legal_requirement', array_column($catalog['types'], 'name'));
+        self::assertCount(11, Json::arr($catalog, 'types'));
+        self::assertContains('legal_requirement', Json::column(Json::at($catalog, 'types'), 'name'));
         $this->assertProblem($this->anonymous()->get(self::ORG.'/form-field-types'), 401, 'unauthorized');
     }
 
@@ -195,25 +197,25 @@ final class AdminEndpointsApiTest extends CatalogApiTestCase
         $added = $this->ok($this->owner->post($program, ['title' => 'Start Trailu 5 km', 'startsAt' => '2026-11-21T10:00:00+01:00', 'activityId' => $demo['activities']['trail5'], 'location' => 'Louka']), 201);
         $this->ok($this->owner->post($program, ['title' => 'Porada pořadatelů', 'startsAt' => '2026-11-21T07:00:00+01:00', 'visibility' => 'participants']), 201);
         $listed = $this->ok($this->owner->get($program));
-        self::assertSame(['Porada pořadatelů', 'Start Trailu 5 km'], array_column($listed['items'], 'title'));
-        $changed = $this->ok($this->owner->request('PUT', $program.'/'.$added['programItemId'], ['title' => 'Start Trailu 5 km (posunut)', 'startsAt' => '2026-11-21T10:30:00+01:00', 'important' => true]));
-        self::assertSame('Start Trailu 5 km (posunut)', $changed['items'][1]['title']);
+        self::assertSame(['Porada pořadatelů', 'Start Trailu 5 km'], Json::column(Json::at($listed, 'items'), 'title'));
+        $changed = $this->ok($this->owner->request('PUT', $program.'/'.Json::str($added, 'programItemId'), ['title' => 'Start Trailu 5 km (posunut)', 'startsAt' => '2026-11-21T10:30:00+01:00', 'important' => true]));
+        self::assertSame('Start Trailu 5 km (posunut)', Json::at($changed, 'items.1.title'));
         $this->assertProblem($this->owner->post($program, ['title' => 'Pozpátku', 'startsAt' => '2026-11-21T10:00:00+01:00', 'endsAt' => '2026-11-21T09:00:00+01:00']), 422, 'invalid_catalog_data');
         $this->assertProblem($this->owner->request('PUT', $program.'/0197b4a0-0000-7000-8000-000000000000', ['title' => 'x', 'startsAt' => '2026-11-21T10:00:00+01:00']), 404, 'program_item_not_found');
-        $this->ok($this->owner->request('DELETE', $program.'/'.$added['programItemId']));
+        $this->ok($this->owner->request('DELETE', $program.'/'.Json::str($added, 'programItemId')));
 
         $post = $this->ok($this->owner->post($news, ['title' => 'Registrace otevřena', 'body' => 'Přihlaste se.', 'priority' => 2]), 201);
         self::assertFalse($post['published']);
-        $this->ok($this->owner->request('PUT', $news.'/'.$post['newsPostId'], ['title' => 'Registrace je otevřena', 'body' => 'Přihlaste se na webu.']));
-        $this->ok($this->owner->post($news.'/'.$post['newsPostId'].'/publish'));
-        $this->assertProblem($this->owner->post($news.'/'.$post['newsPostId'].'/publish'), 409, 'news_post_already_published');
+        $this->ok($this->owner->request('PUT', $news.'/'.Json::str($post, 'newsPostId'), ['title' => 'Registrace je otevřena', 'body' => 'Přihlaste se na webu.']));
+        $this->ok($this->owner->post($news.'/'.Json::str($post, 'newsPostId').'/publish'));
+        $this->assertProblem($this->owner->post($news.'/'.Json::str($post, 'newsPostId').'/publish'), 409, 'news_post_already_published');
         $this->assertProblem($this->owner->post($news, ['title' => '', 'body' => '']), 422, 'validation_failed');
         $items = $this->ok($this->owner->get($news))['items'];
-        self::assertTrue($items[0]['published']);
+        self::assertTrue(Json::at($items, '0.published'));
 
         $this->ok($this->owner->post(self::ORG.'/events/'.$eventId.'/publish'));
         $public = $this->ok($this->anonymous()->get('/api/public/orgs/api-alpha/events/'.$demo['slug']));
-        self::assertSame(['Registrace je otevřena'], array_column($public['news'], 'title'));
-        self::assertNotContains('Porada pořadatelů', array_column($public['program'], 'title'), 'a participants-only item is not public');
+        self::assertSame(['Registrace je otevřena'], Json::column(Json::at($public, 'news'), 'title'));
+        self::assertNotContains('Porada pořadatelů', Json::column(Json::at($public, 'program'), 'title'), 'a participants-only item is not public');
     }
 }

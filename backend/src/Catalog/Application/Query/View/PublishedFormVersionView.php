@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Eventor\Catalog\Application\Query;
+namespace Eventor\Catalog\Application\Query\View;
 
 use Eventor\Catalog\Domain\Form\FormSchema;
 use Eventor\Shared\Domain\Id\EventId;
@@ -11,7 +11,7 @@ use Eventor\Shared\Domain\Id\FormVersionId;
 /**
  * A published form version as read from the database.
  */
-final readonly class StoredFormVersion
+final readonly class PublishedFormVersionView
 {
     public function __construct(
         public FormVersionId $id,

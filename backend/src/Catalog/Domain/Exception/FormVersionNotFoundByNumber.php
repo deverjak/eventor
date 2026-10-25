@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Eventor\Catalog\Application\Query;
+namespace Eventor\Catalog\Domain\Exception;
 
 use Eventor\Shared\Domain\Exception\AsProblem;
 use Eventor\Shared\Domain\Exception\DomainException;

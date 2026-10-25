@@ -29,11 +29,14 @@ final readonly class PublicationGuard
         private ClockInterface $clock,
     ) {}
 
+    /**
+     * @param GuardEvent<object> $event
+     */
     public function __invoke(GuardEvent $event): void
     {
         $subject = $event->getSubject();
-        $transition = $event->getTransition()?->getName();
-        if (!$subject instanceof Event || null === $transition) {
+        $transition = $event->getTransition()->getName();
+        if (!$subject instanceof Event) {
             return;
         }
 

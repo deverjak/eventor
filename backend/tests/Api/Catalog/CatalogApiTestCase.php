@@ -8,6 +8,7 @@ use Eventor\Tests\Api\Support\ApiClient;
 use Eventor\Tests\Api\Support\ApiFixtures;
 use Eventor\Tests\Api\Support\ApiResponse;
 use Eventor\Tests\Api\Support\ApiTestCase;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * Helpers of the Catalog black-box tests. Everything is created through the admin API of the seeded organizer
@@ -103,7 +104,7 @@ abstract class CatalogApiTestCase extends ApiTestCase
     protected function buildDemoEvent(?string $slug = null): array
     {
         $created = $this->createEvent($slug);
-        $eventId = (string) $created['eventId'];
+        $eventId = Json::str($created, 'eventId');
 
         $activities = [
             'trail5' => $this->addActivity($eventId, 'Trail 5 km', ['startsAt' => '2026-11-21T10:00:00+01:00', 'capacityLimit' => 100]),
@@ -124,7 +125,7 @@ abstract class CatalogApiTestCase extends ApiTestCase
         $form = $this->owner->request('PUT', self::ORG.'/events/'.$eventId.'/form/draft', ['fields' => self::demoFormFields($activities, $variants)]);
         self::assertSame(200, $form->status, $form->body);
 
-        return ['eventId' => $eventId, 'slug' => (string) $created['slug'], 'activities' => $activities, 'variants' => $variants];
+        return ['eventId' => $eventId, 'slug' => Json::str($created, 'slug'), 'activities' => $activities, 'variants' => $variants];
     }
 
     /**

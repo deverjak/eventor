@@ -57,7 +57,7 @@ final class IntegrationEventPublishersTest extends TestCase
     private OrganizerId $org;
     private EventId $event;
     private MockClock $clock;
-    /** @var list<array{object, list<object>}> */
+    /** @var list<array{object, array<\Symfony\Component\Messenger\Stamp\StampInterface>}> */
     private array $sent = [];
     private MessageBusInterface $bus;
 
@@ -80,7 +80,7 @@ final class IntegrationEventPublishersTest extends TestCase
     }
 
     /**
-     * @param list<object> $stamps
+     * @param array<\Symfony\Component\Messenger\Stamp\StampInterface> $stamps
      */
     public function capture(object $message, array $stamps): void
     {

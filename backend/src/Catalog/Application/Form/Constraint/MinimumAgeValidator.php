@@ -16,7 +16,9 @@ final class MinimumAgeValidator extends ConstraintValidator
     /** Whole years between the birth date and the reference date (the birthday counts as the day of the new age). */
     public static function ageOn(\DateTimeImmutable $birthDate, \DateTimeImmutable $reference): int
     {
-        return $birthDate->diff($reference)->invert ? -1 : $birthDate->diff($reference)->y;
+        $difference = $birthDate->diff($reference);
+
+        return 1 === $difference->invert ? -1 : $difference->y;
     }
 
     public function validate(mixed $value, Constraint $constraint): void

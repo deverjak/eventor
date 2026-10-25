@@ -20,8 +20,8 @@ abstract class TextType extends AbstractFieldType
         return [
             new Assert\Type('string'),
             new Assert\Length(
-                min: $this->intConstraint($field, 'minLength'),
-                max: $this->intConstraint($field, 'maxLength') ?? $this->defaultMaxLength(),
+                min: $this->nonNegativeInt($field, 'minLength'),
+                max: $this->positiveInt($field, 'maxLength') ?? max(1, $this->defaultMaxLength()),
             ),
         ];
     }

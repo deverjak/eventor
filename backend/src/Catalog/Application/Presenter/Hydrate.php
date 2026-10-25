@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Eventor\Catalog\Application\Query;
+namespace Eventor\Catalog\Application\Presenter;
 
 /**
  * Typed access to the untyped rows of DBAL queries.

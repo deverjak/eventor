@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Eventor\Catalog\Application\Query\PublicAvailabilityQuery;
-use Eventor\Catalog\Application\Query\PublicEventQuery;
+use Eventor\Catalog\Application\Query\PublicEventPageQuery;
 use Eventor\Catalog\Contract\EventCatalog;
 use Eventor\Catalog\Contract\FormSchemaProvider;
 use Eventor\Catalog\Contract\FormValidator;
@@ -26,7 +26,7 @@ return static function (ContainerConfigurator $container): void {
     // The two public-page queries read Registration's AvailabilityReader through its Contract. Both services stay
     // public (never inlined into the controller) and both hold the reader, so the container keeps it a shared service
     // and ModuleBoundaryPass sees the declared Contract type instead of Registration's internals behind the facade.
-    $services->set(PublicEventQuery::class)->public();
+    $services->set(PublicEventPageQuery::class)->public();
     $services->set(PublicAvailabilityQuery::class)->public();
 
     // Test environment only: public aliases (`test.<id>`) of the facades and the state machines, for the integration

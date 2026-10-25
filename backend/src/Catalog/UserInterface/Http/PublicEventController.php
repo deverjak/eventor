@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Catalog\UserInterface\Http;
 
 use Eventor\Catalog\Application\Query\PublicAvailabilityQuery;
-use Eventor\Catalog\Application\Query\PublicEventQuery;
+use Eventor\Catalog\Application\Query\PublicEventPageQuery;
 use Eventor\Identity\Contract\OrganizerLookup;
 use Eventor\Identity\Contract\OrganizerView;
 use OpenApi\Attributes as OA;
@@ -24,7 +24,7 @@ final class PublicEventController extends AbstractController
 {
     public function __construct(
         private readonly OrganizerLookup $organizers,
-        private readonly PublicEventQuery $events,
+        private readonly PublicEventPageQuery $events,
         private readonly PublicAvailabilityQuery $availability,
     ) {}
 
@@ -40,7 +40,7 @@ final class PublicEventController extends AbstractController
     )]
     public function list(string $orgSlug): JsonResponse
     {
-        return $this->json(['items' => $this->events->list($this->organizer($orgSlug)->id)]);
+        return $this->json($this->events->list($this->organizer($orgSlug)->id));
     }
 
     #[Route('/api/public/orgs/{orgSlug}/events/{eventSlug}', name: 'api_public_event_detail', methods: ['GET'])]

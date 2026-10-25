@@ -19,9 +19,9 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * The dynamic form as data for Registration (public form endpoint, preview): only published versions.
  */
 #[AsAlias(FormSchemaProvider::class)]
-final readonly class CatalogFormSchemaProvider implements FormSchemaProvider
+final readonly class FormSchemaProviderQuery implements FormSchemaProvider
 {
-    public function __construct(private PublishedFormReader $forms) {}
+    public function __construct(private PublishedFormQuery $forms) {}
 
     public function currentVersionId(OrganizerId $organizer, EventId $event): FormVersionId
     {

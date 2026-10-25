@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Tests\Integration\Catalog;
 
 use Eventor\Tests\Support\Catalog\CatalogHttpTestCase;
+use Eventor\Tests\Support\Catalog\Json;
 
 /**
  * The Catalog side of PUB-01..03: the public page of a published event without any session.
@@ -30,18 +31,18 @@ final class PublicEventEndpointsTest extends CatalogHttpTestCase
         self::assertSame('published', $page['publicationState']);
         self::assertSame('not_open', $page['registrationState']);
         self::assertSame('Europe/Prague', $page['timezone']);
-        self::assertSame('Borský park', $page['venues'][0]['name']);
+        self::assertSame('Borský park', Json::at($page, 'venues.0.name'));
         self::assertSame(['cash'], $page['paymentMethods']);
-        self::assertSame(['Trail 5 km', 'Týmová štafeta'], array_column($page['activities'], 'name'));
-        $trail = $page['activities'][0];
-        self::assertSame(30000, $trail['variants'][0]['price']['minor']);
-        self::assertSame('Jednotlivec', $trail['variants'][0]['name']);
-        self::assertSame(4, $page['activities'][1]['variants'][0]['teamSize']);
-        self::assertSame(['Rozcvička'], array_column($page['program'], 'title'), 'only the public program is shown');
-        self::assertSame(['Vítejte'], array_column($page['news'], 'title'), 'drafts are not shown');
-        self::assertSame(1, $page['form']['number']);
-        self::assertContains('first_name', array_column($page['form']['fields'], 'key'));
-        self::assertArrayNotHasKey('capacityBucketId', $trail, 'internal ids stay inside');
+        self::assertSame(['Trail 5 km', 'Týmová štafeta'], Json::column(Json::at($page, 'activities'), 'name'));
+        $trail = Json::at($page, 'activities.0');
+        self::assertSame(30000, Json::at($trail, 'variants.0.price.minor'));
+        self::assertSame('Jednotlivec', Json::at($trail, 'variants.0.name'));
+        self::assertSame(4, Json::at($page, 'activities.1.variants.0.teamSize'));
+        self::assertSame(['Rozcvička'], Json::column(Json::at($page, 'program'), 'title'), 'only the public program is shown');
+        self::assertSame(['Vítejte'], Json::column(Json::at($page, 'news'), 'title'), 'drafts are not shown');
+        self::assertSame(1, Json::at($page, 'form.number'));
+        self::assertContains('first_name', Json::column(Json::at($page, 'form.fields'), 'key'));
+        self::assertArrayNotHasKey('capacityBucketId', Json::arr($trail), 'internal ids stay inside');
         self::assertArrayNotHasKey('version', $page);
     }
 
@@ -57,8 +58,8 @@ final class PublicEventEndpointsTest extends CatalogHttpTestCase
 
         self::assertIsArray($page);
         self::assertTrue($page['availabilityShown']);
-        self::assertSame(['status' => 'low', 'available' => 5], $page['activities'][0]['variants'][0]['availability']);
-        self::assertSame(['status' => 'sold_out', 'available' => 0], $page['activities'][1]['variants'][0]['availability']);
+        self::assertSame(['status' => 'low', 'available' => 5], Json::at($page, 'activities.0.variants.0.availability'));
+        self::assertSame(['status' => 'sold_out', 'available' => 0], Json::at($page, 'activities.1.variants.0.availability'));
         self::assertSame(['status' => 'unlimited', 'available' => null], $page['availability']);
     }
 
@@ -76,9 +77,9 @@ final class PublicEventEndpointsTest extends CatalogHttpTestCase
         self::assertTrue($availability['shown']);
         self::assertSame($event['eventId'], $availability['eventId']);
         self::assertSame(['status' => 'unlimited', 'available' => null], $availability['event']);
-        self::assertSame(['status' => 'low', 'available' => 3], $availability['variants'][$event['trailVariant']]);
-        self::assertSame(['status' => 'available', 'available' => 20], $availability['variants'][$event['relayVariant']]);
-        self::assertSame(100, $availability['activities'][$event['trail']]['available'], 'every bucket is its own row; the activity bucket was not touched');
+        self::assertSame(['status' => 'low', 'available' => 3], Json::at($availability, 'variants.'.Json::str($event, 'trailVariant')));
+        self::assertSame(['status' => 'available', 'available' => 20], Json::at($availability, 'variants.'.Json::str($event, 'relayVariant')));
+        self::assertSame(100, Json::at($availability, 'activities.'.Json::str($event, 'trail').'.available'), 'every bucket is its own row; the activity bucket was not touched');
 
         $this->request('GET', '/api/public/orgs/klub/events/neexistuje/availability');
         $this->assertProblem(404, 'event_not_found');
@@ -97,10 +98,10 @@ final class PublicEventEndpointsTest extends CatalogHttpTestCase
         self::assertResponseIsSuccessful();
         self::assertIsArray($form);
         self::assertSame(1, $form['number']);
-        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $form['schemaSha256']);
-        $email = array_column($form['fields'], null, 'key')['orderer_email'];
-        self::assertSame('order', $email['scope']);
-        self::assertSame('email', $email['jsonSchema']['format']);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', Json::str($form, 'schemaSha256'));
+        $email = Json::at(Json::column(Json::at($form, 'fields'), null, 'key'), 'orderer_email');
+        self::assertSame('order', Json::at($email, 'scope'));
+        self::assertSame('email', Json::at($email, 'jsonSchema.format'));
     }
 
     public function test_a_draft_does_not_exist_for_the_public(): void
@@ -129,7 +130,7 @@ final class PublicEventEndpointsTest extends CatalogHttpTestCase
         $list = $this->request('GET', '/api/public/orgs/klub/events');
         self::assertResponseIsSuccessful();
         self::assertIsArray($list);
-        self::assertSame(['verejna'], array_column($list['items'], 'slug'));
+        self::assertSame(['verejna'], Json::column(Json::at($list, 'items'), 'slug'));
 
         $page = $this->request('GET', '/api/public/orgs/klub/events/skryta');
         self::assertResponseIsSuccessful();

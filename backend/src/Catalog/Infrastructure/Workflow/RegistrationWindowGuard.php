@@ -32,11 +32,14 @@ final readonly class RegistrationWindowGuard
         private EventRepository $events,
     ) {}
 
+    /**
+     * @param GuardEvent<object> $event
+     */
     public function __invoke(GuardEvent $event): void
     {
         $subject = $event->getSubject();
-        $transition = $event->getTransition()?->getName();
-        if (null === $transition || !($subject instanceof Event || $subject instanceof Activity)) {
+        $transition = $event->getTransition()->getName();
+        if (!($subject instanceof Event || $subject instanceof Activity)) {
             return;
         }
 

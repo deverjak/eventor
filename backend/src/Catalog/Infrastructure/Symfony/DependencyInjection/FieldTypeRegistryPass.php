@@ -41,7 +41,8 @@ final class FieldTypeRegistryPass implements CompilerPassInterface
                     throw new \LogicException(\sprintf('Field type "%s" must implement %s.', $class, $interface));
                 }
             }
-            $name = $tags[0]['name'] ?? null;
+            $first = $tags[0] ?? [];
+            $name = \is_array($first) ? ($first['name'] ?? null) : null;
             if (!\is_string($name) || null === FieldTypeName::tryFrom($name)) {
                 throw new \LogicException(\sprintf('Field type "%s" is registered as "%s", which is not a FieldTypeName.', $class, \is_string($name) ? $name : 'null'));
             }

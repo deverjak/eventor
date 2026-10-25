@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kde hrozí, že se něco nepovede</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Geist', system-ui, sans-serif; background: #f5f5f5; color: #2d3142; padding: 2.5rem 2rem; }
+.frame { max-width: 1160px; margin: 0 auto; }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #4f5d75; margin-bottom: 0.5rem; }
+h1 { font-family: 'Instrument Serif', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.4rem; }
+.sub { color: #4f5d75; font-size: 0.9rem; margin-bottom: 1.25rem; }
+svg { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="frame">
+<p class="eyebrow">Rizika · heatmapa</p>
+<h1>Kde hrozí, že se něco nepovede</h1>
+
+<svg viewBox="0 0 1120 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="risk-heatmap-title risk-heatmap-desc">
+<title id="risk-heatmap-title">Rizika podle pravděpodobnosti a dopadu</title>
+<desc id="risk-heatmap-desc">Devět rizik v mřížce pravděpodobnost krát dopad; nejvýš vpravo leží rozsah P0 plus P1 vůči času a odchylka skutečného Pairrotu od pairrot-sandboxu, vlevo dole provozní rizika workeru a FrankenPHP.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker><marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker><marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker><marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<rect x="160" y="64" width="880" height="448" fill="#ffffff" stroke="#4f5d75" stroke-width="1"/>
+<rect x="600.0" y="64" width="440.0" height="224.0" fill="rgba(235,108,54,0.04)"/>
+<line x1="600.0" y1="64" x2="600.0" y2="512" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="160" y1="288.0" x2="1040" y2="288.0" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="600.0" y="540" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PRAVDĚPODOBNOST →</text>
+<text x="144" y="288.0" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.14em">DOPAD ↑</text>
+<text x="1028" y="84" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.14em">ŘEŠIT HNED</text>
+<text x="172" y="500" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">SLEDOVAT</text>
+<circle cx="868" cy="144" r="8" fill="#eb6c36"/>
+<text x="852" y="142" fill="#eb6c36" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="end">Rozsah P0 + P1 vs. čas</text>
+<text x="852" y="156" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.08em">R1</text>
+<circle cx="684" cy="200" r="8" fill="#eb6c36"/>
+<text x="700" y="198" fill="#eb6c36" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Sandbox ≠ skutečný Pairrot</text>
+<text x="700" y="212" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R2</text>
+<circle cx="816" cy="296" r="6" fill="#2d3142"/>
+<text x="800" y="294" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="end">Editor formuláře je pracnější</text>
+<text x="800" y="308" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.08em">R3</text>
+<circle cx="516" cy="256" r="6" fill="#2d3142"/>
+<text x="532" y="254" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Výpadek webhooků přes 1 h</text>
+<text x="532" y="268" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R4</text>
+<circle cx="352" cy="160" r="6" fill="#2d3142"/>
+<text x="368" y="158" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Drift kapacitních counterů</text>
+<text x="368" y="172" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R5</text>
+<circle cx="416" cy="216" r="6" fill="#2d3142"/>
+<text x="432" y="214" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Neúplná anonymizace</text>
+<text x="432" y="228" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R6</text>
+<circle cx="452" cy="344" r="6" fill="#2d3142"/>
+<text x="468" y="342" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Jedovatá zpráva ve frontě</text>
+<text x="468" y="356" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R7</text>
+<circle cx="584" cy="392" r="6" fill="#2d3142"/>
+<text x="600" y="390" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="start">Stav ve worker módu FrankenPHP</text>
+<text x="600" y="404" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.08em">R8</text>
+<circle cx="916" cy="424" r="6" fill="#2d3142"/>
+<text x="900" y="422" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="end">Pairrot jen Česká spořitelna</text>
+<text x="900" y="436" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.08em">R9</text>
+<line x1="40" y1="576" x2="1080" y2="576" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/><text x="40" y="596" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGENDA</text><rect x="128" y="588" width="16" height="12" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/><text x="160" y="597" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Riziko s plánem hned od F0</text><rect x="323" y="588" width="16" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="355" y="597" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Riziko se zmírněním v příslušné fázi</text>
+</svg>
+</div>
+</body>
+</html>

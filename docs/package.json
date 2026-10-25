@@ -1,0 +1,15 @@
+{
+  "name": "eventor-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "diagrams": "python architecture/_diagrams/build.py && node architecture/_diagrams/export.mjs",
+    "links": "node architecture/_diagrams/check-links.mjs",
+    "book": "node architecture/_export/book.mjs",
+    "all": "npm run diagrams && npm run links && npm run book"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "marked": "16.4.1"
+  }
+}

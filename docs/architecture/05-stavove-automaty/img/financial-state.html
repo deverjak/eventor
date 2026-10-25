@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanční stav objednávky</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Geist', system-ui, sans-serif; background: #f5f5f5; color: #2d3142; padding: 2.5rem 2rem; }
+.frame { max-width: 1160px; margin: 0 auto; }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #4f5d75; margin-bottom: 0.5rem; }
+h1 { font-family: 'Instrument Serif', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.4rem; }
+.sub { color: #4f5d75; font-size: 0.9rem; margin-bottom: 1.25rem; }
+svg { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="frame">
+<p class="eyebrow">Odvozený stav · FinancialState</p>
+<h1>Finanční stav objednávky</h1>
+
+<svg viewBox="0 0 1120 576" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="financial-state-title financial-state-desc">
+<title id="financial-state-title">Finanční stav objednávky (odvozený)</title>
+<desc id="financial-state-desc">Finanční stav není uložený přechod, ale výsledek foldu ledgeru proti aktuální dlužné částce; platby posouvají objednávku od neuhrazené přes částečně uhrazenou k uhrazené, přeplatek otevře refund úkol a jeho vypořádání vede ke stavu vráceno; změna dlužné částky může stav vrátit zpět.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker><marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker><marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker><marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<path d="M 46,240 L 64,240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,240 L 344,240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 520,228 L 624,228" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 800,240 L 904,240" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 152,200 V 160 Q 152,152 160,152 H 704 Q 712,152 712,160 V 200" fill="none" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 680,280 V 324 Q 680,332 672,332 H 440 Q 432,332 432,324 V 280" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 760,280 V 352 Q 760,360 768,360 H 952 Q 960,360 960,352 V 280" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 1032,280 L 1032,400" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 904,440 L 800,440" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 152,280 L 152,400" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="250" y="220" width="84" height="12" rx="2" fill="#f5f5f5"/><text x="292" y="229" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PLATBA &lt; DLUH</text>
+<rect x="544" y="208" width="56" height="12" rx="2" fill="#f5f5f5"/><text x="572" y="217" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DOPLATEK</text>
+<rect x="810" y="220" width="84" height="12" rx="2" fill="#f5f5f5"/><text x="852" y="229" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PLATBA &gt; DLUH</text>
+<rect x="356" y="132" width="152" height="12" rx="2" fill="#f5f5f5"/><text x="432" y="141" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PŘESNÁ ČÁSTKA (AUTO-MATCH)</text>
+<rect x="502" y="340" width="108" height="12" rx="2" fill="#f5f5f5"/><text x="556" y="349" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DLUH ↑ ZMĚNA (S18)</text>
+<rect x="818" y="368" width="84" height="12" rx="2" fill="#f5f5f5"/><text x="860" y="377" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STORNO ↓ DLUH</text>
+<rect x="1040" y="336" width="72" height="12" rx="2" fill="#f5f5f5"/><text x="1076" y="345" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REFUND ÚKOL</text>
+<rect x="818" y="420" width="68" height="12" rx="2" fill="#f5f5f5"/><text x="852" y="429" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VYPOŘÁDÁNO</text>
+<rect x="160" y="336" width="108" height="12" rx="2" fill="#f5f5f5"/><text x="214" y="345" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REVIEW CASE / SPOR</text>
+<text x="64" y="104" fill="#4f5d75" font-size="13" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="start">stav = f(Σ ledger_entry, amount_due, otevřené refund úkoly, spor)</text>
+<circle cx="40" cy="240" r="6" fill="#2d3142"/>
+<rect x="64" y="200" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="64" y="200" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="152.0" y="238" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">unpaid</text><text x="152.0" y="252" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">neuhrazená · Σ = 0</text>
+<rect x="344" y="200" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="344" y="200" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="432.0" y="238" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">partially_paid</text><text x="432.0" y="252" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0 &lt; Σ &lt; dluh</text>
+<rect x="624" y="200" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="624" y="200" width="176" height="80" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/><text x="712.0" y="238" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">paid</text><text x="712.0" y="252" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Σ = dluh</text>
+<rect x="904" y="200" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="904" y="200" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="992.0" y="238" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">overpaid</text><text x="992.0" y="252" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Σ &gt; dluh</text>
+<rect x="904" y="400" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="904" y="400" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="992.0" y="438" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">refund_pending</text><text x="992.0" y="452" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">otevřený RefundTask</text>
+<rect x="624" y="400" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="624" y="400" width="176" height="80" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/><text x="712.0" y="438" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">refunded</text><text x="712.0" y="452" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">refund_settled</text>
+<rect x="64" y="400" width="176" height="80" rx="6" fill="#f5f5f5"/><rect x="64" y="400" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="152.0" y="438" fill="#2d3142" font-size="13" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">disputed</text><text x="152.0" y="452" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sporná · Attention</text>
+<line x1="40" y1="516" x2="1080" y2="516" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/><text x="40" y="536" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGENDA</text><rect x="128" y="528" width="16" height="12" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/><text x="160" y="537" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Cílový stav</text><rect x="245" y="528" width="16" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/><text x="277" y="537" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Odvozený stav</text><rect x="372" y="528" width="16" height="12" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/><text x="404" y="537" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Koncový stav</text><line x1="494" y1="534" x2="518" y2="534" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/><text x="526" y="537" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Hlavní cesta</text><line x1="616" y1="534" x2="640" y2="534" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/><text x="648" y="537" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Změna dluhu / spor</text>
+</svg>
+</div>
+</body>
+</html>

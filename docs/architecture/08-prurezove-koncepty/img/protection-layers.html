@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vrstvy ochrany požadavku</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Geist', system-ui, sans-serif; background: #f5f5f5; color: #2d3142; padding: 2.5rem 2rem; }
+.frame { max-width: 1040px; margin: 0 auto; }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #4f5d75; margin-bottom: 0.5rem; }
+h1 { font-family: 'Instrument Serif', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.4rem; }
+.sub { color: #4f5d75; font-size: 0.9rem; margin-bottom: 1.25rem; }
+svg { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="frame">
+<p class="eyebrow">Průřezové koncepty · ochrana</p>
+<h1>Vrstvy ochrany požadavku</h1>
+
+<svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="protection-layers-title protection-layers-desc">
+<title id="protection-layers-title">Vrstvy ochrany požadavku</title>
+<desc id="protection-layers-desc">Požadavek prochází šesti vrstvami: rate limit, firewall s autentizací, value resolver tenanta, voter, doménový invariant a databázové constrainty; každá vrstva zastaví jinou třídu chyb.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker><marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker><marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker><marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<text x="120" y="488" fill="#4f5d75" font-size="13" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="start">Žádná vrstva nespoléhá na tu nad sebou: i kdyby voter selhal, kapacitu a peníze hlídá L5 a L6.</text>
+<rect x="120" y="56" width="840" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="140" y="92" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L1</text>
+<text x="184" y="84" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Rate limit a antispam</text>
+<text x="184" y="102" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">RateLimiter · honeypot · Turnstile port (volitelně)</text>
+<text x="940" y="92" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">429 · zneužití</text>
+<rect x="120" y="120" width="840" height="64" fill="#ececec" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="140" y="156" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L2</text>
+<text x="184" y="148" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Firewall a autentizace</text>
+<text x="184" y="166" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">session · SelfServiceToken · access_token · HMAC Pairrot</text>
+<text x="940" y="156" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">401 · kdo jsi</text>
+<rect x="120" y="184" width="840" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="140" y="220" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L3</text>
+<text x="184" y="212" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Value resolver tenanta</text>
+<text x="184" y="230" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">#[CurrentOrganizer] · Doctrine filtr organizer</text>
+<text x="940" y="220" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">404 · cizí tenant</text>
+<rect x="120" y="248" width="840" height="64" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+<text x="140" y="284" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L4</text>
+<text x="184" y="276" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Voter</text>
+<text x="184" y="294" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">Permission × role × událost · PII projekce</text>
+<text x="940" y="284" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">403 · smíš to</text>
+<rect x="120" y="312" width="840" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="140" y="348" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L5</text>
+<text x="184" y="340" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Doménový invariant</text>
+<text x="184" y="358" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">agregát · Workflow guard · CapacityAllocator</text>
+<text x="940" y="348" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">409/422 · pravidla</text>
+<rect x="120" y="376" width="840" height="64" fill="#ececec" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="140" y="412" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L6</text>
+<text x="184" y="404" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Databáze</text>
+<text x="184" y="422" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">CHECK · partial unique · FK RESTRICT · granty append-only</text>
+<text x="940" y="412" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end">poslední linie</text>
+<rect x="120" y="56" width="840" height="384" fill="none" stroke="#4f5d75" stroke-width="1"/>
+<line x1="72" y1="72" x2="72" y2="424" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="60" y="244" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.1em">POŽADAVEK</text>
+<text x="60" y="256" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.1em">JDE DOLŮ</text>
+</svg>
+</div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vrstvy uvnitř jednoho modulu</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Geist', system-ui, sans-serif; background: #f5f5f5; color: #2d3142; padding: 2.5rem 2rem; }
+.frame { max-width: 1080px; margin: 0 auto; }
+.eyebrow { font-family: 'Geist Mono', monospace; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #4f5d75; margin-bottom: 0.5rem; }
+h1 { font-family: 'Instrument Serif', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.4rem; }
+.sub { color: #4f5d75; font-size: 0.9rem; margin-bottom: 1.25rem; }
+svg { width: 100%; display: block; }
+</style>
+</head>
+<body>
+<div class="frame">
+<p class="eyebrow">Architektura · vrstvy</p>
+<h1>Vrstvy uvnitř jednoho modulu</h1>
+
+<svg viewBox="0 0 1040 488" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="layers-title layers-desc">
+<title id="layers-title">Vrstvy uvnitř modulu</title>
+<desc id="layers-desc">Každý modul má vrstvy UserInterface, Contract, Application, Domain a pod nimi sdílený kernel; závislosti vedou jen dolů, Infrastructure implementuje porty domény a aplikace a cizí modul smí volat jen vrstvu Contract.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker><marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker><marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker><marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#4f5d75" stroke-width="1.2"/></marker></defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+<path d="M 848,216 L 800,216" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 848,280 L 800,280" fill="none" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M 200,152 L 240,152" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="240" y="404" fill="#4f5d75" font-size="13" font-style="italic" font-family="'Instrument Serif', serif" text-anchor="start">Hranici hlídá deptrac (importy) a ModuleBoundaryPass (služby v kontejneru).</text>
+<rect x="240" y="56" width="560" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="260" y="84" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">UserInterface</text>
+<text x="260" y="102" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">controllery · value resolvery · CLI · handlery událostí</text>
+<text x="780" y="84" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">→ Application, Shared</text>
+<rect x="240" y="120" width="560" height="64" fill="#ececec" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="260" y="148" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Contract</text>
+<text x="260" y="166" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">fasáda · DTO · integrační události · výjimky</text>
+<text x="780" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">→ Application, Shared</text>
+<rect x="240" y="184" width="560" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="260" y="212" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Application</text>
+<text x="260" y="230" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">commandy · queries · handlery · porty</text>
+<text x="780" y="212" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">→ Domain, Shared</text>
+<rect x="240" y="248" width="560" height="64" fill="#ececec" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="260" y="276" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Domain</text>
+<text x="260" y="294" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">entity · value objects · události · repozitáře (rozhraní)</text>
+<text x="780" y="276" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">→ Shared\Domain</text>
+<rect x="240" y="312" width="560" height="64" fill="#ffffff" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+<text x="260" y="340" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Shared (kernel)</text>
+<text x="260" y="358" fill="#7a8399" font-size="9" font-family="'Geist Mono', monospace">Money · Clock · Uuid · TenantId · Messenger</text>
+<text x="780" y="340" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end">→ nic</text>
+<rect x="240" y="56" width="560" height="320" fill="none" stroke="#4f5d75" stroke-width="1"/>
+<rect x="848" y="184" width="160" height="128" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="864" y="212" fill="#2d3142" font-size="15" font-weight="600" font-family="'Geist', sans-serif">Infrastructure</text>
+<text x="864" y="236" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">Doctrine mapping</text>
+<text x="864" y="252" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">repozitáře · adaptéry</text>
+<text x="864" y="268" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">PairrotHttpGateway…</text>
+<text x="864" y="284" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">implementuje porty</text>
+<rect x="40" y="128" width="160" height="48" rx="6" fill="#f5f5f5"/><rect x="40" y="128" width="160" height="48" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/><text x="120.0" y="150" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Cizí modul</text><text x="120.0" y="164" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">smí jen do Contract/</text>
+<line x1="40" y1="432" x2="1000" y2="432" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/><text x="40" y="452" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGENDA</text><rect x="128" y="444" width="16" height="12" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/><text x="160" y="453" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Jiný modul</text><rect x="240" y="444" width="16" height="12" rx="2" fill="rgba(235,108,54,0.03)" stroke="rgba(235,108,54,0.50)" stroke-width="0.8" stroke-dasharray="4,4"/><text x="272" y="453" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Adaptéry a mapping</text><line x1="393" y1="450" x2="417" y2="450" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/><text x="425" y="453" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Jediný povolený vstup zvenku</text><line x1="598" y1="450" x2="622" y2="450" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/><text x="630" y="453" fill="#4f5d75" font-size="9" font-family="'Geist', sans-serif">Implementuje rozhraní</text>
+</svg>
+</div>
+</body>
+</html>

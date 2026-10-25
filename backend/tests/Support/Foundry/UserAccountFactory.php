@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Tests\Support\Foundry;
 
 use Eventor\Identity\Domain\Account\UserAccount;
-use Eventor\Identity\Domain\Account\UserAccountId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 

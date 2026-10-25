@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use AsyncAws\S3\S3Client;
-use Eventor\Shared\Infrastructure\Doctrine\OrganizerIdType;
+use Eventor\Shared\Infrastructure\Doctrine\SharedIdTypes;
 use Eventor\Shared\Infrastructure\Symfony\ModuleServices;
 use Eventor\Shared\Infrastructure\Symfony\SessionHandlerFactory;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 return static function (ContainerConfigurator $container): void {
     $services = ModuleServices::register($container, 'Shared', \dirname(__DIR__, 2));
 
-    ModuleServices::dbalTypes($container, [OrganizerIdType::NAME => OrganizerIdType::class]);
+    // Typed ids that cross module boundaries (Shared\Domain\Id\*): every module may map them, none registers them.
+    ModuleServices::dbalTypes($container, SharedIdTypes::all());
 
     // Team sessions in Postgres (ADR 006). Test env uses the mock file storage and never instantiates this.
     $services->set(PdoSessionHandler::class)

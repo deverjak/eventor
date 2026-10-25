@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Eventor\Identity\Domain\Event;
 
-use Eventor\Identity\Domain\Account\UserAccountId;
-use Eventor\Identity\Domain\Membership\MembershipId;
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Shared\Domain\Audit\Auditable;
 use Eventor\Shared\Domain\Audit\AuditChange;
+use Eventor\Shared\Domain\Id\MembershipId;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 
 /**
  * Domain event: a member was added to an organizer. Audited here; the application layer translates it into the

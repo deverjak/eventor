@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Eventor\Tests\Integration\Identity;
 
-use Eventor\Identity\Domain\Account\UserAccountId;
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Shared\Application\Tenant\TenantContext;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Eventor\Tests\Support\Foundry\MembershipFactory;
 use Eventor\Tests\Support\HttpTestCase;
 use Zenstruck\Foundry\Test\Factories;

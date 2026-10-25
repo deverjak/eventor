@@ -4,22 +4,38 @@ declare(strict_types=1);
 
 namespace Eventor\Identity\Contract\Event;
 
+use Eventor\Shared\Domain\Id\EventId;
+use Eventor\Shared\Domain\Id\MembershipId;
+use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\NoSubscribers;
+use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
- * A team membership was granted, changed or revoked. Carries ids only (no e-mail, no name).
- * No module subscribes yet (Communication will send invitations, Audit may mirror it), hence #[NoSubscribers].
+ * A membership was granted (previousRole null), changed or revoked (newRole null). `eventScope` empty = all events of the organizer. Role codes: OWNER, EVENT_MANAGER, FINANCE, CHECK_IN.
+ *
+ * P0. Planned subscribers: identity.
+ * Note: `userAccountId` is an addition to the catalogue payload (id only), kept from the W0 event.
+ * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'identity.membership_changed', version: 1)]
-#[NoSubscribers(reason: 'Subscribers arrive with ORG-03 (team invitations).')]
+#[PendingSubscribers('identity')]
 final readonly class MembershipChanged
 {
+    /**
+     * @param list<EventId> $eventScope
+     */
     public function __construct(
-        public string $organizerId,
-        public string $membershipId,
-        public string $userAccountId,
-        public string $role,
-        public string $change,
-    ) {}
+        public OrganizerId $organizerId,
+        public MembershipId $membershipId,
+        public UserAccountId $userAccountId,
+        public ?string $previousRole,
+        public ?string $newRole,
+        public array $eventScope,
+        public \DateTimeImmutable $occurredAt,
+    ) {
+        if (null === $previousRole && null === $newRole) {
+            throw new \InvalidArgumentException('A membership change has a previous or a new role.');
+        }
+    }
 }

@@ -6,16 +6,16 @@ namespace Eventor\Identity\Application\CreateOwner;
 
 use Eventor\Identity\Application\Port\PasswordHasher;
 use Eventor\Identity\Domain\Account\UserAccount;
-use Eventor\Identity\Domain\Account\UserAccountId;
 use Eventor\Identity\Domain\Account\UserAccountRepository;
 use Eventor\Identity\Domain\Membership\Membership;
-use Eventor\Identity\Domain\Membership\MembershipId;
 use Eventor\Identity\Domain\Membership\MembershipRepository;
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Identity\Domain\Organizer\Organizer;
 use Eventor\Identity\Domain\Organizer\OrganizerRepository;
 use Eventor\Identity\Domain\Organizer\SlugAlreadyTaken;
+use Eventor\Shared\Domain\Id\MembershipId;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 

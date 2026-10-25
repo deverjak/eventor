@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Eventor\Tests\Support\Foundry;
 
 use Eventor\Identity\Domain\Membership\Membership;
-use Eventor\Identity\Domain\Membership\MembershipId;
 use Eventor\Identity\Domain\Membership\Role;
+use Eventor\Shared\Domain\Id\MembershipId;
 use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Eventor\Tests\Unit\Shared;
 
-use Eventor\Identity\Domain\Account\UserAccountId;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 

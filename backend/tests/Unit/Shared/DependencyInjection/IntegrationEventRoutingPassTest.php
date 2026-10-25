@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Eventor\Tests\Unit\Shared\DependencyInjection;
 
+use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Eventor\Shared\Infrastructure\Symfony\DependencyInjection\Compiler\IntegrationEventRoutingPass;
 use Eventor\Tests\Fixtures\Routing\Handlers\GoodSubscriber;
 use Eventor\Tests\Fixtures\Routing\Happy\GoodEvent;
 use Eventor\Tests\Fixtures\Routing\Orphan\OrphanEvent;
+use Eventor\Tests\Fixtures\Routing\Pending\PendingEvent;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -18,7 +20,7 @@ use Symfony\Component\DependencyInjection\Definition;
  */
 final class IntegrationEventRoutingPassTest extends TestCase
 {
-    private const array MODULES = ['Shared', 'Identity', 'Payments', 'Communication'];
+    private const array MODULES = ['Shared', 'Identity', 'Payments', 'Communication', 'CheckIn'];
     private const string FIXTURES = __DIR__.'/../../../Fixtures/Routing';
     private const string NS = 'Eventor\\Tests\\Fixtures\\Routing';
 
@@ -126,6 +128,57 @@ final class IntegrationEventRoutingPassTest extends TestCase
         $this->expectExceptionMessageMatches('/ForgotAttribute.*must carry #\[IntegrationEvent/s');
 
         $this->process($this->container('NoAttribute/Contract/Event'));
+    }
+
+    public function test_an_event_with_pending_subscribers_and_no_handler_yet_passes_and_is_not_routed(): void
+    {
+        $container = $this->container('Pending');
+
+        $this->process($container);
+
+        self::assertSame([], $this->routing($container));
+    }
+
+    public function test_a_pending_module_that_got_a_real_handler_fails_the_build_until_it_is_removed_from_the_list(): void
+    {
+        $container = $this->container('Pending');
+        $this->handler($container, 'payments.on_pending', 'Eventor\Payments\UserInterface\EventHandler\OnPending', PendingEvent::class, 'payments_events');
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageMatches('/PendingEvent still lists "payments" in #\[PendingSubscribers\].*already subscribes.*Remove "payments"/s');
+
+        $this->process($container);
+    }
+
+    public function test_a_real_handler_of_a_module_that_is_not_pending_is_routed_next_to_the_pending_ones(): void
+    {
+        $container = $this->container('Pending');
+        $this->handler($container, 'identity.on_pending', 'Eventor\Identity\UserInterface\EventHandler\OnPending', PendingEvent::class, 'identity_events');
+
+        $this->process($container);
+
+        self::assertSame([PendingEvent::class => ['identity_events']], $this->routing($container));
+    }
+
+    public function test_pending_subscribers_must_name_real_modules(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageMatches('/unknown module "paymnets" in #\[PendingSubscribers\]/');
+
+        $this->process($this->container('PendingUnknown'));
+    }
+
+    public function test_pending_subscribers_and_no_subscribers_exclude_each_other(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageMatches('/both #\[NoSubscribers\] and #\[PendingSubscribers\]/');
+
+        $this->process($this->container('PendingAndNone'));
+    }
+
+    public function test_the_attribute_normalises_and_deduplicates_module_names(): void
+    {
+        self::assertSame(['payments', 'communication'], (new PendingSubscribers('payments', 'Communication', 'PAYMENTS'))->modules);
     }
 
     public function test_the_orphan_fixture_is_really_an_integration_event(): void

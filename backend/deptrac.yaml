@@ -195,12 +195,11 @@ deptrac:
     Attention.Domain:
       - Shared
       - DoctrineMapping
+      - Attention.Contract
     Attention.Application:
       - Attention.Domain
       - Attention.Contract
       - Shared
-      - Audit.Contract
-      - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
       - Content.Contract
@@ -209,14 +208,11 @@ deptrac:
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Attention.Infrastructure:
       - Attention.Domain
       - Attention.Application
       - Attention.Contract
       - Shared
-      - Audit.Contract
-      - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
       - Content.Contract
@@ -225,13 +221,10 @@ deptrac:
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Attention.UserInterface:
       - Attention.Application
       - Attention.Contract
       - Shared
-      - Audit.Contract
-      - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
       - Content.Contract
@@ -240,534 +233,297 @@ deptrac:
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Attention.Contract:
       - Shared
     Audit.Domain:
       - Shared
       - DoctrineMapping
+      - Audit.Contract
     Audit.Application:
       - Audit.Domain
       - Audit.Contract
       - Shared
-      - Attention.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Audit.Infrastructure:
       - Audit.Domain
       - Audit.Application
       - Audit.Contract
       - Shared
-      - Attention.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Audit.UserInterface:
       - Audit.Application
       - Audit.Contract
       - Shared
-      - Attention.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Audit.Contract:
       - Shared
     Catalog.Domain:
       - Shared
       - DoctrineMapping
+      - Catalog.Contract
     Catalog.Application:
       - Catalog.Domain
       - Catalog.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Catalog.Infrastructure:
       - Catalog.Domain
       - Catalog.Application
       - Catalog.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Catalog.UserInterface:
       - Catalog.Application
       - Catalog.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Catalog.Contract:
       - Shared
     CheckIn.Domain:
       - Shared
       - DoctrineMapping
+      - CheckIn.Contract
     CheckIn.Application:
       - CheckIn.Domain
       - CheckIn.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     CheckIn.Infrastructure:
       - CheckIn.Domain
       - CheckIn.Application
       - CheckIn.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     CheckIn.UserInterface:
       - CheckIn.Application
       - CheckIn.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     CheckIn.Contract:
       - Shared
     Communication.Domain:
       - Shared
       - DoctrineMapping
+      - Communication.Contract
     Communication.Application:
       - Communication.Domain
       - Communication.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Communication.Infrastructure:
       - Communication.Domain
       - Communication.Application
       - Communication.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Communication.UserInterface:
       - Communication.Application
       - Communication.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Communication.Contract:
       - Shared
     Content.Domain:
       - Shared
       - DoctrineMapping
+      - Content.Contract
     Content.Application:
       - Content.Domain
       - Content.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Content.Infrastructure:
       - Content.Domain
       - Content.Application
       - Content.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Content.UserInterface:
       - Content.Application
       - Content.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
-      - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Content.Contract:
       - Shared
     Identity.Domain:
       - Shared
       - DoctrineMapping
+      - Identity.Contract
     Identity.Application:
       - Identity.Domain
       - Identity.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
-      - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Identity.Infrastructure:
       - Identity.Domain
       - Identity.Application
       - Identity.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
-      - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Identity.UserInterface:
       - Identity.Application
       - Identity.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
-      - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Registration.Contract
-      - Reporting.Contract
     Identity.Contract:
       - Shared
     Legal.Domain:
       - Shared
       - DoctrineMapping
+      - Legal.Contract
     Legal.Application:
       - Legal.Domain
       - Legal.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Legal.Infrastructure:
       - Legal.Domain
       - Legal.Application
       - Legal.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Legal.UserInterface:
       - Legal.Application
       - Legal.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Payments.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Legal.Contract:
       - Shared
     Payments.Domain:
       - Shared
       - DoctrineMapping
+      - Payments.Contract
     Payments.Application:
       - Payments.Domain
       - Payments.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Payments.Infrastructure:
       - Payments.Domain
       - Payments.Application
       - Payments.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Payments.UserInterface:
       - Payments.Application
       - Payments.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
-      - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Privacy.Contract
       - Registration.Contract
-      - Reporting.Contract
     Payments.Contract:
       - Shared
     Privacy.Domain:
       - Shared
       - DoctrineMapping
+      - Privacy.Contract
     Privacy.Application:
       - Privacy.Domain
       - Privacy.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
       - Registration.Contract
-      - Reporting.Contract
     Privacy.Infrastructure:
       - Privacy.Domain
       - Privacy.Application
       - Privacy.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
       - Registration.Contract
-      - Reporting.Contract
     Privacy.UserInterface:
       - Privacy.Application
       - Privacy.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
-      - Payments.Contract
       - Registration.Contract
-      - Reporting.Contract
     Privacy.Contract:
       - Shared
     Registration.Domain:
       - Shared
       - DoctrineMapping
+      - Registration.Contract
     Registration.Application:
       - Registration.Domain
       - Registration.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Reporting.Contract
     Registration.Infrastructure:
       - Registration.Domain
       - Registration.Application
       - Registration.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Reporting.Contract
     Registration.UserInterface:
       - Registration.Application
       - Registration.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
-      - CheckIn.Contract
-      - Communication.Contract
-      - Content.Contract
       - Identity.Contract
       - Legal.Contract
       - Payments.Contract
-      - Privacy.Contract
-      - Reporting.Contract
     Registration.Contract:
       - Shared
     Reporting.Domain:
       - Shared
       - DoctrineMapping
+      - Reporting.Contract
     Reporting.Application:
       - Reporting.Domain
       - Reporting.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract
@@ -776,14 +532,10 @@ deptrac:
       - Reporting.Application
       - Reporting.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract
@@ -791,14 +543,10 @@ deptrac:
       - Reporting.Application
       - Reporting.Contract
       - Shared
-      - Attention.Contract
-      - Audit.Contract
       - Catalog.Contract
       - CheckIn.Contract
       - Communication.Contract
-      - Content.Contract
       - Identity.Contract
-      - Legal.Contract
       - Payments.Contract
       - Privacy.Contract
       - Registration.Contract

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Eventor\Identity\Domain\Membership;
 
 use Doctrine\ORM\Mapping as ORM;
-use Eventor\Identity\Domain\Account\UserAccountId;
 use Eventor\Identity\Domain\Event\MembershipGranted;
 use Eventor\Shared\Domain\Event\RecordsEvents;
 use Eventor\Shared\Domain\Event\RecordsEventsInterface;
+use Eventor\Shared\Domain\Id\MembershipId;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Eventor\Shared\Domain\Tenant\TenantScoped;
 
 /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Identity\Domain\Account;
 
 use Doctrine\ORM\Mapping as ORM;
+use Eventor\Shared\Domain\Id\UserAccountId;
 
 /**
  * A person who can sign in. One account can be a member of several organizers (memberships carry the role).

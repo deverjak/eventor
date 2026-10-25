@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Eventor\Tests\Integration\Architecture;
 
 use Eventor\Identity\Contract\Event\MembershipChanged;
+use Eventor\Shared\Domain\Id\MembershipId;
+use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
 use Eventor\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Envelope;
@@ -22,7 +25,7 @@ final class IntegrationEventRoutingTest extends IntegrationTestCase
         $locator = static::getContainer()->get('messenger.senders_locator');
         self::assertInstanceOf(SendersLocatorInterface::class, $locator);
 
-        $event = new MembershipChanged('o', 'm', 'u', 'OWNER', 'granted');
+        $event = new MembershipChanged(OrganizerId::generate(), MembershipId::generate(), UserAccountId::generate(), null, 'OWNER', [], new \DateTimeImmutable('2026-11-01T12:00:00+00:00'));
         $routed = array_keys(iterator_to_array($locator->getSenders(new Envelope($event))));
 
         // Test-only subscribers (tests/Fixtures/Messenger) on the Doctrine transports of the outbox proof.

@@ -39,7 +39,11 @@ final class F0_TransactionalOutboxTest extends ScenarioTestCase
         self::assertIsString($row['body']);
         self::assertIsString($row['headers']);
         $body = json_decode($row['body'], true, flags: \JSON_THROW_ON_ERROR);
-        self::assertSame(['organizerId' => $ids['organizerId'], 'membershipId' => $ids['membershipId'], 'userAccountId' => $ids['userAccountId'], 'role' => 'OWNER', 'change' => 'granted'], $body);
+        self::assertIsArray($body);
+        $occurredAt = $body['occurredAt'] ?? null;
+        unset($body['occurredAt']);
+        self::assertSame(['organizerId' => $ids['organizerId'], 'membershipId' => $ids['membershipId'], 'userAccountId' => $ids['userAccountId'], 'previousRole' => null, 'newRole' => 'OWNER', 'eventScope' => []], $body);
+        self::assertIsString($occurredAt, 'every integration event says when it happened');
         self::assertStringNotContainsString('outbox@example.test', $row['body'], 'integration events carry ids, never personal data');
         self::assertStringContainsString('TenantStamp', $row['headers']);
         self::assertStringContainsString('CorrelationStamp', $row['headers']);
@@ -74,7 +78,7 @@ final class F0_TransactionalOutboxTest extends ScenarioTestCase
         $received = $recorder->receivedBy('ok');
         self::assertCount(1, $received);
         self::assertInstanceOf(MembershipChanged::class, $received[0]['event']);
-        self::assertSame($ids['membershipId'], $received[0]['event']->membershipId);
+        self::assertSame($ids['membershipId'], $received[0]['event']->membershipId->toString());
         self::assertSame($ids['organizerId'], $received[0]['tenant'], 'TenantContextMiddleware restored the tenant from the TenantStamp');
         self::assertSame('console', $received[0]['actor'], 'AuditContextMiddleware restored the actor from the ActorStamp');
     }

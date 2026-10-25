@@ -6,6 +6,7 @@ namespace Eventor\Shared\Infrastructure\Symfony\DependencyInjection\Compiler;
 
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
 use Eventor\Shared\Domain\Messaging\NoSubscribers;
+use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Symfony\Component\Config\Resource\FileExistenceResource;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -16,7 +17,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  * event's senders in `messenger.senders_locator`, so a publisher never lists its subscribers and a new subscriber
  * cannot be forgotten. The pass fails the container build when
  *  - a class in `<Module>\Contract\Event` lacks `#[IntegrationEvent(name, version)]`, or two events share a name,
- *  - an integration event has no subscriber and is not `#[NoSubscribers]`,
+ *  - an integration event has no subscriber and is neither `#[NoSubscribers]` nor `#[PendingSubscribers(...)]`,
+ *  - `#[PendingSubscribers]` (contract-first scaffold) lists an unknown module, is combined with `#[NoSubscribers]`,
+ *    or still lists a module that already has a real handler (so the list shrinks while the modules arrive),
  *  - a handler of an integration event has no `fromTransport`, or its transport is not configured,
  *  - one transport has two handlers of the same event,
  *  - a module handler listens on another module's transport.
@@ -30,6 +33,9 @@ final readonly class IntegrationEventRoutingPass implements CompilerPassInterfac
 
     private ModuleOf $modules;
 
+    /** @var list<string> lower-case names of the real modules (no Shared), empty = do not validate names */
+    private array $knownModules;
+
     /**
      * @param list<string> $moduleNames names of the application modules (a handler of module X must use `x_events`)
      */
@@ -38,6 +44,7 @@ final readonly class IntegrationEventRoutingPass implements CompilerPassInterfac
         array $moduleNames = [],
     ) {
         $this->modules = new ModuleOf($moduleNames);
+        $this->knownModules = array_values(array_map(strtolower(...), array_filter($moduleNames, static fn(string $m): bool => 'Shared' !== $m)));
     }
 
     public function process(ContainerBuilder $container): void
@@ -75,11 +82,21 @@ final readonly class IntegrationEventRoutingPass implements CompilerPassInterfac
         }
 
         foreach ($events as $event => $attribute) {
-            if (isset($routing[$event])) {
+            $reflection = new \ReflectionClass($event);
+            $pending = $this->pendingModules($event, $reflection);
+
+            foreach ($pending as $module) {
+                $handler = $routing[$event][$module.'_events'] ?? null;
+                if (null !== $handler) {
+                    throw new \LogicException(\sprintf('Integration event %s still lists "%s" in #[PendingSubscribers], but "%s" already subscribes. Remove "%s" from the attribute (and the attribute itself when the list is empty).', $event, $module, $handler, $module));
+                }
+            }
+
+            if (isset($routing[$event]) || [] !== $pending) {
                 continue;
             }
-            if ([] === (new \ReflectionClass($event))->getAttributes(NoSubscribers::class)) {
-                throw new \LogicException(\sprintf('Integration event %s has no subscriber. Add a handler with fromTransport or mark the event #[NoSubscribers].', $event));
+            if ([] === $reflection->getAttributes(NoSubscribers::class)) {
+                throw new \LogicException(\sprintf('Integration event %s has no subscriber. Add a handler with fromTransport, mark the event #[NoSubscribers] or, while its module is not written yet, #[PendingSubscribers(...)].', $event));
             }
         }
 
@@ -90,6 +107,33 @@ final readonly class IntegrationEventRoutingPass implements CompilerPassInterfac
             $map[$event] = array_values(array_unique([...($map[$event] ?? []), ...array_keys($transports)]));
         }
         $senders->replaceArgument(0, $map);
+    }
+
+    /**
+     * @param \ReflectionClass<object> $event
+     *
+     * @return list<string> lower-case module names listed in #[PendingSubscribers]
+     */
+    private function pendingModules(string $class, \ReflectionClass $event): array
+    {
+        $attributes = $event->getAttributes(PendingSubscribers::class);
+        if ([] === $attributes) {
+            return [];
+        }
+        if ([] !== $event->getAttributes(NoSubscribers::class)) {
+            throw new \LogicException(\sprintf('Integration event %s has both #[NoSubscribers] and #[PendingSubscribers]; they exclude each other.', $class));
+        }
+
+        $modules = $attributes[0]->newInstance()->modules;
+        if ([] !== $this->knownModules) {
+            foreach ($modules as $module) {
+                if (!\in_array($module, $this->knownModules, true)) {
+                    throw new \LogicException(\sprintf('Integration event %s lists the unknown module "%s" in #[PendingSubscribers] (known: %s).', $class, $module, implode(', ', $this->knownModules)));
+                }
+            }
+        }
+
+        return $modules;
     }
 
     /**

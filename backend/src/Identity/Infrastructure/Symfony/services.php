@@ -4,20 +4,14 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Eventor\Identity\Infrastructure\Doctrine\MembershipIdType;
-use Eventor\Identity\Infrastructure\Doctrine\UserAccountIdType;
 use Eventor\Shared\Infrastructure\Symfony\ModuleServices;
 use Symfony\Component\Security\Http\RateLimiter\DefaultLoginRateLimiter;
 
 // Everything module-specific is declared here, so parallel work on other modules never touches config/packages:
-// services + Doctrine mapping (ModuleServices::register), DBAL types, rate limiters and the inbound event transport.
+// services + Doctrine mapping (ModuleServices::register), rate limiters and the inbound event transport.
+// (Typed ids that cross module boundaries, e.g. MembershipId, live in Shared and are registered by SharedIdTypes.)
 return static function (ContainerConfigurator $container): void {
     $services = ModuleServices::register($container, 'Identity', \dirname(__DIR__, 2));
-
-    ModuleServices::dbalTypes($container, [
-        UserAccountIdType::NAME => UserAccountIdType::class,
-        MembershipIdType::NAME => MembershipIdType::class,
-    ]);
 
     // `identity_events`: outbox queue of integration events that Identity subscribes to.
     ModuleServices::eventTransport($container, 'identity');

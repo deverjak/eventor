@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Eventor\Tests\Unit\Identity;
 
 use Eventor\Identity\Domain\Account\UserAccount;
-use Eventor\Identity\Domain\Account\UserAccountId;
 use Eventor\Identity\Domain\Event\MembershipGranted;
 use Eventor\Identity\Domain\Event\OrganizerRegistered;
 use Eventor\Identity\Domain\Membership\Membership;
-use Eventor\Identity\Domain\Membership\MembershipId;
 use Eventor\Identity\Domain\Membership\Role;
 use Eventor\Identity\Domain\Organizer\Organizer;
+use Eventor\Shared\Domain\Id\MembershipId;
 use Eventor\Shared\Domain\Id\OrganizerId;
+use Eventor\Shared\Domain\Id\UserAccountId;
 use PHPUnit\Framework\TestCase;
 
 final class IdentityDomainTest extends TestCase

@@ -97,7 +97,8 @@ Tests extend `Eventor\Tests\Api\Support\ApiTestCase`: `$this->anonymous()`, `$th
 ```
 src/<Module>/
   Contract/            public: facade interfaces, DTOs, Event/*, Exception/*, Attribute/*   (-> Shared only)
-  Domain/              entities (#[ORM\Entity], schema = module), value objects, repositories (interfaces), Event/ (internal)
+  Domain/              entities (#[ORM\Entity], schema = module), value objects, repositories (interfaces), Event/ (internal);
+                       may use Shared and the module's own Contract (public exceptions, Contract enums)
   Application/         <UseCase>/ command + handler, Query/ (DBAL read models), Port/, EventPublisher/
   Infrastructure/      Doctrine repositories, adapters, Symfony/<Module>Module.php + services.php
   UserInterface/       Http/ (controllers, ValueResolver/), EventHandler/ (integration-event subscribers), Console/, Security/
@@ -134,6 +135,7 @@ return static function (ContainerConfigurator $container): void {
 * **Every command records a domain event** (aggregate: `use RecordsEvents` + `implements RecordsEventsInterface`, `$this->record(new XHappened(...))`), or the command class is `#[ReadOnlyCommand]`, or the handler is `#[NoDomainEvent('reason')]`. Enforced in dev/test by `DomainEventsMiddleware`.
 * **Audit**: a domain event implementing `Auditable` is audited automatically in the same transaction (actor + correlation id from `AuditContext`). No personal data in `AuditChange` (Audit module's `audit_entry`).
 * **Integration events**: class in `<Module>\Contract\Event`, `#[IntegrationEvent('module.snake_name', version)]`, ids and neutral values only. Published from a synchronous `#[AsMessageHandler(bus: 'event.bus')]` that translates the domain event (see `Identity\Application\EventPublisher\PublishMembershipChanged`). Subscribers: `#[AsMessageHandler(fromTransport: '<module>_events')]` in `UserInterface/EventHandler`, **one handler per event and module**, writing only through the module's own commands. Routing is derived from the subscribers by `IntegrationEventRoutingPass`; an event without subscribers needs `#[NoSubscribers]`. Delivery is at-least-once: subscribers must be idempotent. Retries follow `ScheduleRetryStrategy` (1 min, 5 min, 30 min, 2 h, 12 h, then `failed` + an Attention item).
+* **Contract-first scaffold**: all integration events and facades already exist ([`docs/implementation/contracts.md`](../docs/implementation/contracts.md) lists them per module). Every event carries `#[PendingSubscribers('payments', ...)]` (lower-case module names). When you write a subscriber, **remove your module from that attribute in the same change**: `IntegrationEventRoutingPass` fails the build while a module with a real handler is still listed (and when an event has neither a handler, `#[NoSubscribers]` nor a pending list). `EVENTOR_REPORT_PENDING=1 … phpunit --filter PendingSubscribersTest` prints what is left. Typed ids that cross modules (`OrderId`, `ParticipationId`, ...) are in `Shared\Domain\Id`; their DBAL types are registered by the Shared module (`SharedIdTypes`), just map them with `#[ORM\Column(type: OrderIdType::NAME)]`. A foreign Contract may only be used if `config/module_contracts.php` lists the edge (then `php bin/deptrac-layers`).
 * **Idempotency**: controller takes `IdempotencyKey $key` (mandatory) or `?IdempotencyKey` (optional) and dispatches with `IdempotencyStamp::for($scope, $key->value, $canonicalBody)`; command results must be JSON-serialisable.
 
 ### Controllers (admin zone shape)

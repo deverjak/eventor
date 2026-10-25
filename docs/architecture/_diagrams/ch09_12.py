@@ -37,7 +37,7 @@ def container_build():
            sub2="ModuleBoundary · PermissionMatrix")
     d.node(720, 96, 360, 88, "Zkompilovaný kontejner", "registry jako service locatory", "CACHE", "store",
            sub2="chyba konfigurace = pád buildu, ne produkce")
-    d.node(40, 320, 160, 88, "Požadavek", "firewall", "HTTP", "input", sub2="authenticator")
+    d.node(40, 320, 160, 88, "Požadavek", "FrankenPhpRuntime", "HTTP", "input", sub2="firewall · authenticator")
     d.node(240, 320, 200, 88, "Value resolvery", "organizátor · token", "RESOLVE", "focal", sub2="QR · idempotenční klíč")
     d.node(480, 320, 160, 88, "Controller", "#[MapRequestPayload]", "UI", "step", sub2="voter · command")
     d.node(680, 320, 200, 88, "command.bus", "tenant · audit", "BUS", "step", sub2="idempotence · transakce")

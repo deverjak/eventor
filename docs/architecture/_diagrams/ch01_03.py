@@ -136,11 +136,11 @@ def deployment():
     chip(d, 76, 128, 176, "Next.js", "dev :3000")
     chip(d, 76, 156, 176, "rewrite", "/api → php")
     infra(d, 312, 96, 208, 128, "php", "API")
-    chip(d, 324, 128, 184, "FrankenPHP", "PHP 8.4")
+    chip(d, 324, 128, 184, "FrankenPHP runtime", "PHP 8.4")
     chip(d, 324, 156, 184, "Symfony", "8.x")
     chip(d, 324, 184, 184, "HTTP", ":8080")
     infra(d, 312, 264, 208, 128, "worker", "ASYNC")
-    chip(d, 324, 296, 184, "messenger", "*_events · async")
+    chip(d, 324, 296, 184, "worker runner", "messenger:consume")
     chip(d, 324, 324, 184, "scheduler", "expirace · reconcile")
     chip(d, 324, 352, 184, "LISTEN", "messenger_messages")
     infra(d, 568, 96, 208, 96, "postgres", "DB", "store")
@@ -260,7 +260,7 @@ def er_registration():
     d = Diagram("er-registration", 1200, 656, "Registrace: objednávka, osoba, účast, kapacita",
                 "Objednávka drží osoby, účasti a sady odpovědí; účast je jediný nositel kapacity a přes capacity_claim obsazuje řádky capacity_bucket pro událost, aktivitu, variantu a vlnu.")
     s = Schema(d)
-    s.table("order", 40, 72, 280, [("id", "uuid"), ("organizer_id", "uuid"), ("event_id", "uuid"), ("number", "text"),
+    s.table("orders", 40, 72, 280, [("id", "uuid"), ("organizer_id", "uuid"), ("event_id", "uuid"), ("number", "text"),
                                    ("orderer_email", "text"), ("amount_due_minor", "bigint"), ("placed_at", "timestamptz")],
             fk=("organizer_id", "event_id"), more=6)
     s.table("answer_set", 40, 392, 280, [("id", "uuid"), ("order_id", "uuid"), ("scope", "text"), ("subject_id", "uuid"),
@@ -275,20 +275,20 @@ def er_registration():
             fk=("order_id", "guardian_person_id"))
     s.table("capacity_claim", 900, 72, 260, [("participation_id", "uuid"), ("bucket_id", "uuid"), ("seats", "int"), ("status", "text")],
             pk=("participation_id", "bucket_id"), fk=("participation_id", "bucket_id"))
-    s.table("capacity_bucket", 900, 280, 260, [("id", "uuid"), ("organizer_id", "uuid"), ("scope_type", "text"), ("scope_id", "uuid"),
-                                               ("limit", "int"), ("held", "int"), ("confirmed", "int")])
+    s.table("capacity_bucket", 900, 280, 260, [("id", "uuid"), ("organizer_id", "uuid"), ("event_id", "uuid"), ("scope_type", "text"),
+                                               ("scope_id", "uuid"), ("unit", "text"), ("limit", "int"), ("held", "int"), ("confirmed", "int")], more=2)
     # participation.order_id -> order.id
     y1 = s.cy("participation", "order_id")
-    s_id = s.cy("order", "id", -4)
+    s_id = s.cy("orders", "id", -4)
     d.path(f"M 480,{y1} H 428 Q 420,{y1} 420,{y1 - 8} V {s_id + 8} Q 420,{s_id} 412,{s_id} H 320")
     # participation.person_id -> person.id (left loop)
     y1, y2 = s.cy("participation", "person_id"), s.cy("person", "id")
     d.path(f"M 480,{y1} H 464 Q 456,{y1} 456,{y1 + 8} V {y2 - 8} Q 456,{y2} 464,{y2} H 480")
     # person.order_id -> order.id
-    y1, y2 = s.cy("person", "order_id"), s.cy("order", "id", 8)
+    y1, y2 = s.cy("person", "order_id"), s.cy("orders", "id", 8)
     d.path(f"M 480,{y1} H 408 Q 400,{y1} 400,{y1 - 8} V {y2 + 8} Q 400,{y2} 392,{y2} H 320")
     # answer_set.order_id -> order.id (left side)
-    y1, y2 = s.cy("answer_set", "order_id"), s.cy("order", "id")
+    y1, y2 = s.cy("answer_set", "order_id"), s.cy("orders", "id")
     d.path(f"M 40,{y1} H 28 Q 20,{y1} 20,{y1 - 8} V {y2 + 8} Q 20,{y2} 28,{y2} H 40")
     # capacity_claim.participation_id -> participation.id
     y = s.cy("capacity_claim", "participation_id")
@@ -310,7 +310,7 @@ def er_payments():
                 "Ledger je append-only a jeho fold dává finanční stav v order_finance; platební požadavky zrcadlí Pairrot, refund úkoly a nespárované transakce se k objednávce vážou jen odkazem na order_id.")
     s = Schema(d)
     s.table("payment_request", 40, 72, 280, [("id", "uuid"), ("order_id", "uuid"), ("attempt", "int"), ("pairrot_id", "text"),
-                                             ("variable_symbol", "text"), ("amount_minor", "bigint"), ("status", "text"),
+                                             ("creation_state", "text"), ("variable_symbol", "text"), ("amount_minor", "bigint"), ("status", "text"),
                                              ("last_sequence", "bigint"), ("known_paid_amount", "bigint")],
             fk=("order_id",), more=5)
     s.table("refund_task", 40, 424, 280, [("id", "uuid"), ("order_id", "uuid"), ("amount_minor", "bigint"), ("reason", "text"),
@@ -380,7 +380,7 @@ def er_legal():
     d.path(f"M 840,{y1} H 788 Q 780,{y1} 780,{y1 + 8} V {y2 - 8} Q 780,{y2} 772,{y2} H 320")
     y1, y2 = s.cy("confirmation", "supersedes_id"), s.cy("confirmation", "id")
     d.path(f"M 1140,{y1} H 1152 Q 1160,{y1} 1160,{y1 - 8} V {y2 + 8} Q 1160,{y2} 1152,{y2} H 1140")
-    d.caption(440, 336, "VERZE: OBSAH V S3 POD legal/sha256/<HASH>")
+    d.caption(440, 336, "DRAFT UŽ MÁ HASH I KLÍČ V S3 POD legal/sha256/<HASH>")
     d.caption(440, 352, "CONFIRMATION: JEN INSERT, NIKDY UPDATE")
     d.legend(576, [("muted", "FK sloupec → sloupec, ON DELETE RESTRICT"), ("accent", "Vazba na konkrétní verzi")])
     write(d, "03-data", "Databázové schéma · právní potvrzení", "Dokumenty, požadavky a potvrzení")

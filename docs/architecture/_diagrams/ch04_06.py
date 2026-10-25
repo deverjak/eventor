@@ -110,9 +110,9 @@ def payment_webhook_sequence():
          ("m", 0, 1, "POST WEBHOOK", "link-dashed"),
          ("s", 1, "HMAC · ±5 MIN", "muted"),
          ("m", 1, 2, "INBOX ON CONFLICT", "muted"),
-         ("m", 1, 0, "200 OK", "return"),
+         ("m", 1, 0, "204 NO CONTENT", "return"),
          ("p", "2 · ZPRACOVÁNÍ"),
-         ("m", 2, 3, "NOTIFY INBOX", "async"),
+         ("m", 2, 3, "PAIRROT_INBOX", "async"),
          ("s", 3, "SEQUENCE > POSLEDNÍ?", "muted"),
          ("m", 3, 2, "LEDGER DELTA · FOLD", "accent"),
          ("m", 3, 2, "OUTBOX FINANCE", "muted"),
@@ -167,7 +167,7 @@ def participation_states():
     d.state(480, 80, 192, 80, "transferred", "vzniká nová účast", terminal=True)
     d.state(880, 240, 192, 80, "cancelled", "kapacita uvolněna", terminal=True)
     d.state(128, 432, 192, 80, "expired", "kapacita uvolněna")
-    d.state(480, 432, 192, 80, "requires_attention", "AttentionItem otevřen")
+    d.state(480, 432, 192, 80, "requires_attention", "AttentionItem open")
     d.legend(556, [("focal", "Cílový stav"), ("step", "Živý stav"), ("store", "Koncový stav"),
                    ("accent", "Hlavní cesta"), ("dashed", "Podle nastavení akce")])
     write(d, "05-stavove-automaty", "Stavový automat · Participation", "Stavy účasti")
@@ -216,7 +216,7 @@ def financial_state():
 def outbox_flow():
     d = Diagram("outbox-flow", 1120, 496, "Transakční outbox a doručení odběratelům",
                 "HTTP požadavek i plánovač končí příkazem, který v jedné transakci změní stav a zapíše integrační událost "
-                "do messenger_messages, jeden řádek na transport každého odebírajícího modulu; Postgres NOTIFY probudí worker, "
+                "do messenger_messages, jeden řádek na transport každého odebírajícího modulu; worker Doctrine transport pravidelně polluje, "
                 "ten si zprávu vezme přes SKIP LOCKED a předá handleru modulu, s retry strategií a failure transportem.")
     d.zone(40, 128, 576, 120, "JEDNA DB TRANSAKCE")
     d.line(164, 96, 164, 152, "link")
@@ -224,7 +224,7 @@ def outbox_flow():
     d.line(164, 328, 164, 224, "dashed")
     d.vlabel(164, 276, "PLÁNOVANĚ", "dashed")
     d.line(264, 188, 360, 188, "accent", "COMMIT")
-    d.line(584, 172, 680, 172, "async", "NOTIFY")
+    d.line(584, 172, 680, 172, "async", "POLL")
     d.line(680, 204, 584, 204, "dashed", "SKIP LOCKED", side="below")
     d.path("M 720,224 V 260 Q 720,268 712,268 H 648 Q 640,268 640,276 V 328", "muted")
     d.path("M 780,224 V 268 Q 780,276 788,276 H 816 Q 824,276 824,284 V 328", "muted")
@@ -241,7 +241,7 @@ def outbox_flow():
     d.node(744, 328, 160, 72, "communication_events", "Delivery · Mailer", "SUB", "step")
     d.node(928, 328, 160, 72, "attention_events", "AttentionItem", "SUB", "step")
     d.legend(440, [("input", "Vstup"), ("focal", "Worker"), ("store", "Databáze"), ("accent", "Commit"),
-                   ("async", "Probuzení"), ("dashed", "Plánovaně / claim")])
+                   ("async", "Polling fronty"), ("dashed", "Plánovaně / claim")])
     write(d, "06-asynchronni-svet", "Asynchronní svět · outbox", "Od commitu k odběratelům")
 
 

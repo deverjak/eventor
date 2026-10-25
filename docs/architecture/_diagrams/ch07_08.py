@@ -93,7 +93,7 @@ def protection_layers():
                 "doménový invariant a databázové constrainty; každá vrstva zastaví jinou třídu chyb.")
     rows = [
         ("L1", "Rate limit a antispam", "RateLimiter · honeypot · Turnstile port (volitelně)", "429 · zneužití", False),
-        ("L2", "Firewall a autentizace", "session · SelfServiceToken · access_token · HMAC Pairrot", "401 · kdo jsi", False),
+        ("L2", "Firewall a autentizace", "webhooks · self_service · check_in · public · team", "401 · kdo jsi", False),
         ("L3", "Value resolver tenanta", "#[CurrentOrganizer] · Doctrine filtr organizer", "404 · cizí tenant", False),
         ("L4", "Voter", "Permission × role × událost · PII projekce", "403 · smíš to", True),
         ("L5", "Doménový invariant", "agregát · Workflow guard · CapacityAllocator", "409/422 · pravidla", False),

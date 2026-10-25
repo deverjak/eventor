@@ -132,7 +132,7 @@ Pořadí podle hodnoty pro demo. Co se nevejde, zůstane navržené.
 - produkční image a `compose.prod.yaml` za Caddy (připraveno pro VPS, bez nasazení), zálohy Postgresu, health endpointy, Monolog JSON s redakcí,
 - security review (rate limity, CSRF, hlavičky, tajemství ve vaultu), `Infection` na doménu,
 - finální `eventor:demo:seed`,
-- synchronizace knihy s kódem: rozpory do [11](../11-rizika-a-kompromisy/README.md#rozpory-mezi-knihou-a-kódem), regenerace diagramů a PDF.
+- synchronizace knihy s kódem: rozpory do [11](../11-rizika-a-kompromisy/README.md#odchylky-implementace-od-návrhu-w0w2), regenerace diagramů a PDF.
 
 **Výstupní kritéria:** celé CI zelené včetně nočního E2E proti `pairrot-sandbox`; demo storyboard projde od čisté databáze za méně než 15 minut; PDF knihy odpovídá kódu.
 

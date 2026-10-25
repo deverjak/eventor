@@ -351,6 +351,20 @@ final class PairrotKeysEnvVarProcessor implements EnvVarProcessorInterface
 
 Tajemství (management klíč Pairrotu, HMAC klíč QR tokenů, klíč pro šifrování údajů organizátora) žijí v **Symfony Secrets vaultu** (`config/secrets/prod`) a lokálně v `.env.local`.
 
+## Čtení: query služby a jejich pojmenování
+
+Čtení nejde přes bus. Controller i cizí modul volají **query službu**: `final readonly` třídu v `Application/Query/`, která udělá DBAL dotaz a vrátí **typované DTO**, nikdy `array<string, mixed>`. Přípony `Service`, `Manager` ani `Helper` se nepoužívají, protože neříkají, co třída dělá.
+
+| Role | Kde | Pojmenování | Příklad |
+|---|---|---|---|
+| Fasáda pro cizí moduly | `Contract/` | podle role, kterou hraje pro volajícího | `EventCatalog`, `ProgramReader`, `OrganizerLookup` |
+| Implementace fasády | `Application/Query/` | `<Fasáda>Query` + `#[AsAlias(<Fasáda>::class)]` | `EventCatalogQuery`, `OrganizerLookupQuery` |
+| Čtecí model obrazovky nebo endpointu | `Application/Query/` | `<Oblast>Query`, metody podle pohledu (`list`, `detail`) | `AdminEventQuery::detail()` → `EventDetailView` |
+| Výsledek čtení | `Contract/` (je-li součástí fasády), jinak `Application/Query/View/` | `*View` | `EventDetailView`, `PublicEventPageView` |
+| Prezentér, sestavení výstupu, hydratace | `Application/Presenter/` | podle toho, co sestavuje | `FormSchemaPresenter` |
+
+Query služba smí skládat jiné query služby a fasády (veřejná stránka akce = katalog + formulář + program + dostupnost). Pak to má být vidět z jejího jména (`PublicEventPageQuery`) a z jednoho návratového DTO. Ve složce `Query/` leží jen query služby a jejich `View`; nic, co zapisuje.
+
 ## Messenger
 
 Messenger hraje v Eventoru dvě role. **Command bus** je obdoba MediatR: jeden command, jeden handler, pipeline z middleware. **Transporty** jsou databázová fronta a zároveň transakční outbox. Busy jsou jen dva, protože jen dva potřebují odlišné chování. Čtení přes bus nejde vůbec, controller volá query službu.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Eventor\Audit\Application\Query;
 
 use Doctrine\DBAL\Connection;
+use Eventor\Audit\Contract\AuditActorKind;
 use Eventor\Audit\Contract\AuditEntryView;
 use Eventor\Audit\Contract\AuditTrail;
 use Eventor\Shared\Domain\Id\OrganizerId;
@@ -15,28 +16,39 @@ final readonly class AuditTrailQuery implements AuditTrail
 {
     public function __construct(private Connection $connection) {}
 
-    public function forEntity(OrganizerId $organizer, string $entityType, string $entityId): array
+    public function forEntity(OrganizerId $organizer, string $entityType, string $entityId, ?AuditActorKind $actor = null): array
     {
-        /** @var list<array{action: string, actor_type: string, actor_id: string|null, actor_label: string|null, before: string|null, after: string|null, reason: string|null, correlation_id: string, occurred_at: string}> $rows */
-        $rows = $this->connection->fetchAllAssociative(
-            'SELECT action, actor_type, actor_id, actor_label, before, after, reason, correlation_id, occurred_at
-               FROM audit.audit_entry
-              WHERE organizer_id = :organizer AND entity_type = :type AND entity_id = :id
-              ORDER BY occurred_at, id',
-            ['organizer' => $organizer->toString(), 'type' => $entityType, 'id' => $entityId],
-        );
+        $sql = 'SELECT action, actor_type, actor_id, actor_label, before, after, reason, correlation_id, occurred_at
+                  FROM audit.audit_entry
+                 WHERE organizer_id = :organizer AND entity_type = :type AND entity_id = :id';
+        $params = ['organizer' => $organizer->toString(), 'type' => $entityType, 'id' => $entityId];
+        if (null !== $actor) {
+            $sql .= ' AND actor_type = :actor';
+            $params['actor'] = $actor->storedValue();
+        }
 
-        return array_map(static fn(array $row): AuditEntryView => new AuditEntryView(
-            $row['action'],
-            $row['actor_type'],
+        /** @var list<array<string, string|null>> $rows */
+        $rows = $this->connection->fetchAllAssociative($sql.' ORDER BY occurred_at, id', $params);
+
+        return array_map(static fn(array $row): AuditEntryView => self::view($row), $rows);
+    }
+
+    /**
+     * @param array<string, string|null> $row
+     */
+    public static function view(array $row): AuditEntryView
+    {
+        return new AuditEntryView(
+            (string) $row['action'],
+            (string) $row['actor_type'],
             $row['actor_id'],
             $row['actor_label'],
             self::decode($row['before']),
             self::decode($row['after']),
             $row['reason'],
-            $row['correlation_id'],
-            new \DateTimeImmutable($row['occurred_at']),
-        ), $rows);
+            (string) $row['correlation_id'],
+            new \DateTimeImmutable((string) $row['occurred_at']),
+        );
     }
 
     /**

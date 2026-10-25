@@ -18,7 +18,7 @@ use Eventor\Shared\Domain\Money;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'payments.refund_task_settled', version: 1)]
-#[PendingSubscribers('attention', 'communication')]
+#[PendingSubscribers('communication')]
 final readonly class RefundTaskSettled
 {
     public function __construct(

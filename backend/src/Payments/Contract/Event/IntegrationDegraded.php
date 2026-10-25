@@ -6,7 +6,6 @@ namespace Eventor\Payments\Contract\Event;
 
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * An integration (Pairrot) is unavailable or paused (circuit breaker, paused inbound address). `organizerId` is null for a platform-wide outage.
@@ -15,7 +14,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'payments.integration_degraded', version: 1)]
-#[PendingSubscribers('attention')]
 final readonly class IntegrationDegraded
 {
     public function __construct(

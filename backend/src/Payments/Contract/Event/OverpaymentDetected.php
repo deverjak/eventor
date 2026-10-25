@@ -7,7 +7,6 @@ namespace Eventor\Payments\Contract\Event;
 use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Eventor\Shared\Domain\Money;
 
 /**
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Money;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'payments.overpayment_detected', version: 1)]
-#[PendingSubscribers('attention')]
 final readonly class OverpaymentDetected
 {
     public function __construct(

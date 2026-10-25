@@ -9,9 +9,10 @@ use Eventor\Shared\Domain\Id\OrganizerId;
 interface AuditTrail
 {
     /**
-     * History of one entity of the organizer, oldest first.
+     * History of one entity of the organizer, oldest first, optionally only the changes made by one kind of actor
+     * (AUD-03).
      *
      * @return list<AuditEntryView>
      */
-    public function forEntity(OrganizerId $organizer, string $entityType, string $entityId): array;
+    public function forEntity(OrganizerId $organizer, string $entityType, string $entityId, ?AuditActorKind $actor = null): array;
 }

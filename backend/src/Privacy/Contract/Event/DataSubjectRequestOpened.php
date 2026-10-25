@@ -8,7 +8,6 @@ use Eventor\Privacy\Contract\DataSubjectRequestType;
 use Eventor\Shared\Domain\Id\DataSubjectRequestId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A data subject request (access, export, erasure, rectification) was opened (PRV-03); `dueAt` is the legal deadline.
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'privacy.data_subject_request_opened', version: 1)]
-#[PendingSubscribers('attention')]
 final readonly class DataSubjectRequestOpened
 {
     public function __construct(

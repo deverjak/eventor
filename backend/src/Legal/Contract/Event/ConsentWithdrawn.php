@@ -20,7 +20,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'legal.consent_withdrawn', version: 1)]
-#[PendingSubscribers('attention', 'communication')]
+#[PendingSubscribers('communication')]
 final readonly class ConsentWithdrawn
 {
     public function __construct(

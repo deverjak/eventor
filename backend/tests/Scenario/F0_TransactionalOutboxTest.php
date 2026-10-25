@@ -120,7 +120,7 @@ final class F0_TransactionalOutboxTest extends ScenarioTestCase
         $items = $this->dbRows('SELECT type, state, organizer_id, subject_type, payload, dedupe_key FROM attention.attention_item');
         self::assertCount(1, $items);
         self::assertSame('outbox_dead_letter', $items[0]['type']);
-        self::assertSame('OPEN', $items[0]['state']);
+        self::assertSame('open', $items[0]['state']);
         self::assertSame($ids['organizerId'], $items[0]['organizer_id'], 'the item belongs to the tenant of the failed message');
         self::assertIsString($items[0]['payload']);
         $payload = json_decode($items[0]['payload'], true, flags: \JSON_THROW_ON_ERROR);

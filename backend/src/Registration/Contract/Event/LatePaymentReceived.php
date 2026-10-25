@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * Money arrived for expired participations (CAP-05, S05). `autoRestore` = the activity restores them automatically when capacity allows (S06).
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.late_payment_received', version: 1)]
-#[PendingSubscribers('attention')]
 final readonly class LatePaymentReceived
 {
     /**

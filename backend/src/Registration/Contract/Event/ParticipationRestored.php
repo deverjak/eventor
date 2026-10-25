@@ -18,7 +18,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.participation_restored', version: 1)]
-#[PendingSubscribers('communication', 'attention')]
+#[PendingSubscribers('communication')]
 final readonly class ParticipationRestored
 {
     public function __construct(

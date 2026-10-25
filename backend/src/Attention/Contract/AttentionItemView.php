@@ -9,7 +9,8 @@ use Eventor\Shared\Domain\Id\AttentionItemId;
 use Eventor\Shared\Domain\Id\EventId;
 
 /**
- * One queue item. `payload` holds neutral context for the UI (ids, amounts), no personal data.
+ * One queue item. `payload` holds neutral context for the UI (ids, amounts), no personal data. `subjectId` is an
+ * empty string when the cause has no subject id.
  */
 final readonly class AttentionItemView
 {
@@ -25,5 +26,9 @@ final readonly class AttentionItemView
         public ?EventId $eventId,
         public \DateTimeImmutable $openedAt,
         public array $payload,
+        public ?\DateTimeImmutable $acknowledgedAt = null,
+        public ?\DateTimeImmutable $resolvedAt = null,
+        public ?string $resolution = null,
+        public ?string $resolutionNote = null,
     ) {}
 }

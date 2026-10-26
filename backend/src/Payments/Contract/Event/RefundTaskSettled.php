@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\RefundTaskId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Eventor\Shared\Domain\Money;
 
 /**
@@ -18,7 +17,6 @@ use Eventor\Shared\Domain\Money;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'payments.refund_task_settled', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class RefundTaskSettled
 {
     public function __construct(

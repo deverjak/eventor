@@ -10,7 +10,6 @@ use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Id\VariantId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * The variant (and maybe the activity) of a participation changed in place (S18).
@@ -19,7 +18,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.participation_variant_changed', version: 1)]
-#[PendingSubscribers('communication', 'checkin')]
 final readonly class ParticipationVariantChanged
 {
     public function __construct(

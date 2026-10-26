@@ -18,7 +18,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.participations_confirmed', version: 1)]
-#[PendingSubscribers('communication', 'checkin', 'registration')]
+#[PendingSubscribers('registration')]
 final readonly class ParticipationsConfirmed
 {
     /**

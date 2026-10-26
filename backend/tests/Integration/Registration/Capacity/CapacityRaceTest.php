@@ -48,6 +48,11 @@ final class CapacityRaceTest extends IntegrationTestCase
             $this->connection()->executeStatement("DELETE FROM registration.capacity_claim WHERE bucket_id IN ($in)", $ids);
             $this->connection()->executeStatement("DELETE FROM registration.capacity_bucket WHERE id IN ($in)", $ids);
         }
+        // The racing processes committed their order -> person -> participation chain (the claims reference it).
+        $organizer = $this->organizer->toString();
+        $this->connection()->executeStatement('DELETE FROM registration.participation WHERE organizer_id = ?', [$organizer]);
+        $this->connection()->executeStatement('DELETE FROM registration.person WHERE organizer_id = ?', [$organizer]);
+        $this->connection()->executeStatement('DELETE FROM registration.orders WHERE organizer_id = ?', [$organizer]);
         parent::tearDown();
     }
 

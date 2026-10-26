@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\ActivityId;
 use Eventor\Shared\Domain\Id\EventId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * The start of an activity moved. `important` = the organizer wants affected participants to be told (S12).
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'catalog.activity_rescheduled', version: 1)]
-#[PendingSubscribers('communication', 'checkin')]
 final readonly class ActivityRescheduled
 {
     public function __construct(

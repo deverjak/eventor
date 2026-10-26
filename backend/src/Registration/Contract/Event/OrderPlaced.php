@@ -20,7 +20,7 @@ use Eventor\Shared\Domain\Payment\PaymentMethod;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.order_placed', version: 1)]
-#[PendingSubscribers('communication', 'reporting')]
+#[PendingSubscribers('reporting')]
 final readonly class OrderPlaced
 {
     /**

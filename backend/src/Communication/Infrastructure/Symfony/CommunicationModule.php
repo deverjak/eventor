@@ -8,8 +8,8 @@ use Eventor\Shared\Infrastructure\Symfony\ModuleInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * Module registration for Communication (schema `communication`). Compiler passes and attribute autoconfiguration of the
- * module are registered in build(); services, Messenger transport, workflows and schedules live in services.php.
+ * Module registration for Communication (schema `communication`). Services, Messenger transports, workflows and the
+ * schedule live in services.php.
  */
 final class CommunicationModule implements ModuleInterface
 {

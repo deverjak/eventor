@@ -9,7 +9,6 @@ use Eventor\Shared\Domain\Id\DocumentVersionId;
 use Eventor\Shared\Domain\Id\LegalDocumentId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -19,7 +18,6 @@ use Symfony\Component\Uid\Uuid;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'legal.document_version_published', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class DocumentVersionPublished
 {
     public function __construct(

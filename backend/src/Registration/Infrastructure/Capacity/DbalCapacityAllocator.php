@@ -142,18 +142,29 @@ final readonly class DbalCapacityAllocator implements CapacityAllocator
             throw CapacityInvariantViolated::noClaims($participation);
         }
 
-        foreach ($rows as $row) {
-            if (ClaimStatus::Released !== $row['status']) {
-                continue;
-            }
+        // All or nothing for this participation: a full bucket in the middle (event and activity already taken, the
+        // variant full) must not leave the earlier buckets occupied by a caller that handles CapacityExhausted.
+        $savepoint = 'reclaim_'.bin2hex(random_bytes(4));
+        $this->connection->createSavepoint($savepoint);
+        try {
+            foreach ($rows as $row) {
+                if (ClaimStatus::Released !== $row['status']) {
+                    continue;
+                }
 
-            $bucketId = CapacityBucketId::fromString($row['bucket_id']);
-            $demand = new BucketDemand($bucketId, ClaimKind::Held === $as ? $row['seats'] : 0, ClaimKind::Confirmed === $as ? $row['seats'] : 0);
-            if (0 === $this->take($organizer, $demand)) {
-                throw $this->whyNot($organizer, $bucketId, $waitlistAvailable);
+                $bucketId = CapacityBucketId::fromString($row['bucket_id']);
+                $demand = new BucketDemand($bucketId, ClaimKind::Held === $as ? $row['seats'] : 0, ClaimKind::Confirmed === $as ? $row['seats'] : 0);
+                if (0 === $this->take($organizer, $demand)) {
+                    throw $this->whyNot($organizer, $bucketId, $waitlistAvailable);
+                }
+                $this->setStatus($participation->toString(), $row['bucket_id'], $as->status());
             }
-            $this->setStatus($participation->toString(), $row['bucket_id'], $as->status());
+        } catch (\Throwable $e) {
+            $this->connection->rollbackSavepoint($savepoint);
+
+            throw $e;
         }
+        $this->connection->releaseSavepoint($savepoint);
     }
 
     public function canReclaim(OrganizerId $organizer, ParticipationId $participation): bool

@@ -18,6 +18,7 @@ final class AlreadyCheckedIn extends DomainException
         public readonly \DateTimeImmutable $checkedInAt,
         public readonly ?string $checkedInBy,
         public readonly ?CheckInStationId $station,
+        public readonly ?string $deviceLabel = null,
     ) {
         parent::__construct('The participant is already checked in.');
     }
@@ -31,6 +32,7 @@ final class AlreadyCheckedIn extends DomainException
             'checkedInAt' => $this->checkedInAt->format(\DATE_ATOM),
             'checkedInBy' => $this->checkedInBy,
             'stationId' => $this->station?->toString(),
+            'deviceLabel' => $this->deviceLabel,
         ];
     }
 }

@@ -9,7 +9,6 @@ use Eventor\Shared\Domain\Id\EventId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ProgramItemId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A program item was created, moved or changed (PRG-03). `important` = tell the affected participants; activityId = null means the item is for all participants of the event.
@@ -19,7 +18,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'catalog.program_item_changed', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class ProgramItemChanged
 {
     public function __construct(

@@ -39,6 +39,10 @@ x-api-env: &api-env
   # The black-box suite logs in many times from one IP: raise the throttling limits.
   LOGIN_MAX_ATTEMPTS: "1000"
   LOGIN_GLOBAL_MAX_ATTEMPTS: "10000"
+  # Public order creation and self-service recovery (Registration, API-03) are throttled per address too.
+  ORDER_MAX_PER_10_MIN: "1000"
+  ORDER_MAX_PER_MIN_EVENT: "1000"
+  RECOVER_MAX_PER_HOUR_IP: "1000"
   DATABASE_URL: postgresql://eventor_app:eventor_app@postgres:5432/eventor_api?serverVersion=17&charset=utf8
   DATABASE_MIGRATIONS_URL: postgresql://eventor_owner:eventor_owner@postgres:5432/eventor_api?serverVersion=17&charset=utf8
 

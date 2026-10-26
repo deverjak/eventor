@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\EventId;
 use Eventor\Shared\Domain\Id\NewsPostId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A news post was published (PUB-04). `broadcast` = also send it by e-mail to the participants.
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'catalog.news_published', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class NewsPublished
 {
     public function __construct(

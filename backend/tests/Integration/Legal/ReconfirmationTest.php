@@ -12,6 +12,7 @@ use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Id\PersonId;
 use Eventor\Tests\Integration\Legal\Support\LegalTestCase;
 use Eventor\Tests\Integration\Legal\Support\ReconfirmationSpy;
+use Eventor\Tests\Support\Registration\InsertsParticipations;
 
 /**
  * S14 and S15 (LEG-08): a new version without the flag changes nothing for old confirmations; with the flag everybody who
@@ -19,6 +20,8 @@ use Eventor\Tests\Integration\Legal\Support\ReconfirmationSpy;
  */
 final class ReconfirmationTest extends LegalTestCase
 {
+    use InsertsParticipations;
+
     public function test_a_version_without_the_flag_asks_nobody_s14(): void
     {
         $organizer = $this->organizer();
@@ -42,6 +45,9 @@ final class ReconfirmationTest extends LegalTestCase
         $second = ParticipationId::generate();
         $orderOnly = OrderId::generate();
         $third = ParticipationId::generate();
+        foreach ([$first, $second, $third] as $id) {
+            $this->insertParticipation($organizer, $id);
+        }
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Granted, PersonId::generate(), $first);
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Granted, PersonId::generate(), $second);
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Granted, PersonId::generate(), order: $orderOnly);
@@ -74,6 +80,8 @@ final class ReconfirmationTest extends LegalTestCase
         $requirement = $this->requirement($organizer, $doc['documentId'], RequirementType::Likeness, mandatory: false);
         $withdrawer = ParticipationId::generate();
         $asked = ParticipationId::generate();
+        $this->insertParticipation($organizer, $asked);
+        $this->insertParticipation($organizer, $withdrawer);
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Granted, $person = PersonId::generate(), $withdrawer, OrderId::generate());
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Withdrawn, $person, $withdrawer);
         $this->decide($organizer, $requirement, $doc['versionId'], ConsentDecision::Granted, PersonId::generate(), $asked);
@@ -104,6 +112,7 @@ final class ReconfirmationTest extends LegalTestCase
         $terms = $this->requirement($organizer, $doc['documentId'], purpose: 'terms');
         $health = $this->requirement($organizer, $doc['documentId'], RequirementType::HealthDeclaration, purpose: 'health');
         $participation = ParticipationId::generate();
+        $this->insertParticipation($organizer, $participation);
         $person = PersonId::generate();
         $this->decide($organizer, $terms, $doc['versionId'], ConsentDecision::Granted, $person, $participation);
         $this->decide($organizer, $health, $doc['versionId'], ConsentDecision::Granted, $person, $participation);

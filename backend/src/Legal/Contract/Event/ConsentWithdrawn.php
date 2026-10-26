@@ -11,7 +11,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A revocable consent was withdrawn (S16, LEG-09). The registration stays valid. For `likeness` Attention also opens a media review task.
@@ -20,7 +19,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'legal.consent_withdrawn', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class ConsentWithdrawn
 {
     public function __construct(

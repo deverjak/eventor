@@ -17,7 +17,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'catalog.event_completed', version: 1)]
-#[PendingSubscribers('communication', 'privacy')]
+#[PendingSubscribers('privacy')]
 final readonly class EventCompleted
 {
     public function __construct(

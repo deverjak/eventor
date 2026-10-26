@@ -7,7 +7,6 @@ namespace Eventor\Identity\Contract\Event;
 use Eventor\Shared\Domain\Id\InvitationId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A team invitation was created (ORG-03). The e-mail address and the accept link are read with `InvitationQuery::forDelivery()`. `role` is the role code (`OWNER`, `EVENT_MANAGER`, `FINANCE`, `CHECK_IN`).
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'identity.member_invited', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class MemberInvited
 {
     public function __construct(

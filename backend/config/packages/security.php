@@ -32,6 +32,14 @@ return App::config([
                 'provider' => 'identity_users',
                 'custom_authenticators' => [\Eventor\Payments\UserInterface\Security\PairrotSignatureAuthenticator::class],
             ],
+            // Participant self-service (API-04, Registration): `Authorization: SelfService ss1_<id>_<secret>`, stateless.
+            'self_service' => [
+                'pattern' => '^/api/self-service',
+                'stateless' => true,
+                'provider' => 'identity_users',
+                'entry_point' => \Eventor\Registration\UserInterface\Security\SelfServiceTokenAuthenticator::class,
+                'custom_authenticators' => [\Eventor\Registration\UserInterface\Security\SelfServiceTokenAuthenticator::class],
+            ],
             // Check-in devices (ADR 006): `Authorization: Bearer dev1_...` on /api/check-in, stateless. A request to the
             // same path without a device token (a signed-in team member) falls through to `team` and its session.
             'check_in' => [
@@ -62,6 +70,7 @@ return App::config([
         'access_control' => [
             ['path' => '^/api/(auth/(login|logout|sign-up|invitations/(preview|accept))|health|doc)', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/api/(admin|auth)', 'roles' => 'ROLE_USER'],
+            ['path' => '^/api/self-service', 'roles' => 'ROLE_PARTICIPANT'],
             ['path' => '^/api/check-in', 'roles' => ['ROLE_USER', 'ROLE_DEVICE']],
         ],
     ],

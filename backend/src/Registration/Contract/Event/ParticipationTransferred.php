@@ -17,7 +17,7 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.participation_transferred', version: 1)]
-#[PendingSubscribers('communication', 'legal')]
+#[PendingSubscribers('legal')]
 final readonly class ParticipationTransferred
 {
     public function __construct(

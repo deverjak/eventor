@@ -9,7 +9,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * An expired or flagged participation was confirmed again.
@@ -18,7 +17,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.participation_restored', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class ParticipationRestored
 {
     public function __construct(

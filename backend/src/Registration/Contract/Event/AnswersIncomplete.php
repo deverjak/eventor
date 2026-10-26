@@ -9,7 +9,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * Participations lack answers to required fields of the current form version (S17); the participant is asked to complete them.
@@ -18,7 +17,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.answers_incomplete', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class AnswersIncomplete
 {
     /**

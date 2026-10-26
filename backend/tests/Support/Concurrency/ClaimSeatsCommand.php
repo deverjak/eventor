@@ -10,9 +10,15 @@ use Eventor\Registration\Contract\Exception\CapacityExhausted;
 use Eventor\Registration\Domain\Capacity\CapacityAllocator;
 use Eventor\Registration\Domain\Capacity\ClaimKind;
 use Eventor\Registration\Domain\Capacity\SeatClaim;
+use Eventor\Shared\Domain\Id\ActivityId;
 use Eventor\Shared\Domain\Id\CapacityBucketId;
+use Eventor\Shared\Domain\Id\EventId;
+use Eventor\Shared\Domain\Id\FormVersionId;
+use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
+use Eventor\Shared\Domain\Id\PersonId;
+use Eventor\Shared\Domain\Id\VariantId;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -60,7 +66,8 @@ final readonly class ClaimSeatsCommand
         );
 
         try {
-            $this->connection->transactional(function () use ($organizer, $claims): void {
+            $this->connection->transactional(function () use ($organizer, $claims, $participation, $kind): void {
+                $this->insertParticipation($organizer, $participation, ClaimKind::Held->value === $kind);
                 $this->allocator->claim(OrganizerId::fromString($organizer), $claims);
             });
         } catch (CapacityExhausted $e) {
@@ -72,6 +79,26 @@ final readonly class ClaimSeatsCommand
         }
 
         return $this->report($output, ['ok' => true, 'participationId' => $participation->toString()], Command::SUCCESS);
+    }
+
+    /**
+     * The claim rows reference the participation (deferred foreign key, checked at COMMIT), so the process writes the
+     * minimal order -> person -> participation chain a real `PlaceOrder` would, in the same transaction as the claim.
+     */
+    private function insertParticipation(string $organizer, ParticipationId $participation, bool $held): void
+    {
+        $order = OrderId::generate()->toString();
+        $person = PersonId::generate()->toString();
+        $now = '2026-11-01 12:00:00+00';
+        $this->connection->executeStatement(
+            'INSERT INTO registration.orders (id, organizer_id, event_id, number, orderer_email, payment_method, amount_due_minor, amount_due_currency, form_version_id, placed_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)',
+            [$order, $organizer, EventId::generate()->toString(), 'T-'.substr($order, -12), 'race@example.test', 'cash', 'CZK', FormVersionId::generate()->toString(), $now],
+        );
+        $this->connection->executeStatement('INSERT INTO registration.person (id, organizer_id, order_id) VALUES (?, ?, ?)', [$person, $organizer, $order]);
+        $this->connection->executeStatement(
+            'INSERT INTO registration.participation (id, organizer_id, order_id, person_id, event_id, activity_id, variant_id, state, hold_expires_at, registration_code, price_minor, price_currency, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)',
+            [$participation->toString(), $organizer, $order, $person, EventId::generate()->toString(), ActivityId::generate()->toString(), VariantId::generate()->toString(), $held ? 'pending' : 'confirmed', $held ? '2026-12-01 12:00:00+00' : null, strtoupper(substr($participation->toString(), -10)), 'CZK', $now],
+        );
     }
 
     /**

@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\SelfServiceTokenId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * The orderer asked for a new self-service link (REG-11). The secret never travels on the bus: Communication builds the link with `SelfServiceLinks::urlFor()`.
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'registration.self_service_link_requested', version: 1)]
-#[PendingSubscribers('communication')]
 final readonly class SelfServiceLinkRequested
 {
     public function __construct(

@@ -13,7 +13,6 @@ use Eventor\Shared\Domain\Id\OrderId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\ParticipationId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * A decision (requested, granted, declined, withdrawn) was appended to the confirmation ledger (LEG-07). Registration recomputes `legal_state` of the participation.
@@ -22,7 +21,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'legal.confirmation_recorded', version: 1)]
-#[PendingSubscribers('registration')]
 final readonly class ConfirmationRecorded
 {
     public function __construct(

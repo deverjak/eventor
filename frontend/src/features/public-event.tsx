@@ -365,17 +365,6 @@ export function PublicEvent({
                             ))}
                           </select>
                         </label>
-                        <label className="block text-sm">
-                          <input
-                            type="checkbox"
-                            className="mr-2"
-                            checked={item.minor}
-                            onChange={(e) =>
-                              update({ minor: e.target.checked })
-                            }
-                          />
-                          Nezletilý účastník
-                        </label>
                         <button
                           className={secondary}
                           onClick={() =>

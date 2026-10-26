@@ -1,2 +1,5 @@
-import { redirect } from "next/navigation";
-export default function Home() { redirect("/org/demo/overview"); }
+import { AuthForm } from "@/components/auth-form";
+
+export default function Home() {
+  return <AuthForm />;
+}

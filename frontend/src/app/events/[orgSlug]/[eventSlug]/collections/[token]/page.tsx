@@ -1,0 +1,2 @@
+import { PhotoGallery } from "@/features/public-content";
+export default async function Page({ params }: { params: Promise<{orgSlug: string; eventSlug: string; token: string}> }) { const {orgSlug, eventSlug, token} = await params; return <main className="mx-auto max-w-5xl px-5 py-10"><h1 className="mb-8 text-3xl font-semibold">Fotografie z akce</h1><PhotoGallery path={`/api/public/orgs/${encodeURIComponent(orgSlug)}/events/${encodeURIComponent(eventSlug)}/collection-links/${encodeURIComponent(token)}`}/></main>; }

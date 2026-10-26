@@ -10,7 +10,6 @@ export function SessionGate({orgSlug, children}: {orgSlug:string;children:React.
   const [state,setState] = useState<"loading"|"ready"|"forbidden"|"error">("loading");
   const [attempt,setAttempt] = useState(0);
   useEffect(() => {
-    if(orgSlug === "demo") return;
     let active = true;
     api.auth.me().then(profile => {
       if(active) setState(profile.memberships.some(m=>m.slug===orgSlug) ? "ready" : "forbidden");
@@ -21,7 +20,7 @@ export function SessionGate({orgSlug, children}: {orgSlug:string;children:React.
     });
     return ()=>{active=false;};
   },[orgSlug,router,attempt]);
-  if(orgSlug === "demo" || state === "ready") return children;
+  if(state === "ready") return children;
   return <main className="grid min-h-screen place-content-center gap-5 p-6 text-center" aria-live="polite">
     <div className="text-sm font-semibold tracking-widest text-stone-500">EVENTOR</div>
     <h1 className="text-2xl font-semibold">{state === "loading" ? "Načítáme váš pracovní prostor…" : state === "forbidden" ? "K tomuto organizátorovi nemáte přístup." : "Spojení se nepodařilo navázat."}</h1>

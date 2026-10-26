@@ -41,13 +41,13 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const method = init.method || 'GET';
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
-  if (body !== undefined) headers.set('Content-Type', 'application/json');
+  if (body !== undefined && !(body instanceof FormData)) headers.set('Content-Type', 'application/json');
   csrfHeaders(path, method, headers);
   if (idempotencyKey) headers.set('Idempotency-Key', idempotencyKey);
   if (version !== undefined) headers.set('If-Match', String(version));
   let response: Response;
   try {
-    response = await fetch(path, { ...init, method, headers, credentials: 'same-origin', cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body) });
+    response = await fetch(path, { ...init, method, headers, credentials: 'same-origin', cache: 'no-store', body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body) });
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') throw error;
     throw new ApiError({ status: 0, code: 'network_error', title: 'Backend není dostupný', detail: 'Spojení se nepodařilo. Zkontrolujte připojení a zkuste to znovu.' });
@@ -80,11 +80,30 @@ const query = (values?: object) => {
   return params.size ? `?${params}` : '';
 };
 
+export function organizerSlug(name: string): string {
+  const slug = name.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64).replace(/-+$/g, '');
+  return slug.length >= 2 ? slug : slug ? `${slug}-org` : 'organizator';
+}
+
+export async function signUpWithGeneratedSlug(body: {email: string; password: string; displayName: string; organizerName: string}): Promise<AccountProfile> {
+  const base = organizerSlug(body.organizerName);
+  let slug = base;
+  for (let attempt = 0; ; attempt++) {
+    try { return await api.auth.signUp({ ...body, slug }); }
+    catch (error) {
+      // This specific rejection occurs before account creation. Never repeat an ambiguous network failure.
+      if (!(error instanceof ApiError) || error.status !== 409 || error.code !== 'organizer_slug_taken' || attempt >= 3) throw error;
+      slug = `${base.slice(0, 55).replace(/-+$/g, '')}-${crypto.randomUUID().slice(0, 8)}`;
+    }
+  }
+}
+
 export const api = {
   request,
   auth: {
     me: (signal?: AbortSignal) => request<AccountProfile>('/api/auth/me', { signal }),
     login: (email: string, password: string) => request<AccountProfile>('/api/auth/login', { method: 'POST', body: { email, password } }),
+    signUp: (body: {email: string; password: string; displayName: string; organizerName: string; slug: string}) => request<AccountProfile>('/api/auth/sign-up', { method: 'POST', body }),
     logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
   },
   organizer(slug: string) {

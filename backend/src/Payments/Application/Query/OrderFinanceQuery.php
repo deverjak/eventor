@@ -102,7 +102,7 @@ final readonly class OrderFinanceQuery implements FinanceQuery
                 PaymentRequestPurpose::from(self::str($row, 'purpose')),
                 PaymentRequestStatus::from(self::str($row, 'status')),
                 self::str($row, 'variable_symbol'),
-                self::str($row, 'account_number'),
+                self::accountNumber($row),
                 \is_string($row['iban']) ? $row['iban'] : null,
                 Money::of(self::int($row, 'amount_minor'), Currency::from(self::str($row, 'amount_currency'))),
                 new \DateTimeImmutable(self::str($row, 'due_at')),
@@ -127,6 +127,27 @@ final readonly class OrderFinanceQuery implements FinanceQuery
             Money::of(self::int($row, 'due_minor'), $currency),
             Money::of(self::int($row, 'received_minor'), $currency),
         );
+    }
+
+    /**
+     * Pairrot may announce only the IBAN of the receiving account. A Czech IBAN (CZkk BBBB PPPPPP NNNNNNNNNN) maps to the
+     * domestic "prefix-number/bank" form people type into their bank; any other IBAN is shown as it is.
+     *
+     * @param array<string, mixed> $row
+     */
+    private static function accountNumber(array $row): string
+    {
+        if (\is_string($row['account_number'] ?? null) && '' !== $row['account_number']) {
+            return $row['account_number'];
+        }
+        $iban = \is_string($row['iban'] ?? null) ? strtoupper(str_replace(' ', '', $row['iban'])) : '';
+        if (1 !== preg_match('/^CZ\d{2}(\d{4})(\d{6})(\d{10})$/', $iban, $m)) {
+            return $iban;
+        }
+        $prefix = ltrim($m[2], '0');
+        $number = ltrim($m[3], '0');
+
+        return ('' === $prefix ? '' : $prefix.'-').$number.'/'.$m[1];
     }
 
     /**

@@ -109,6 +109,31 @@ namespace Eventor\Tests\Unit\Shared\DependencyInjection {
             $this->process($container);
         }
 
+        public function test_an_inlined_facade_is_judged_as_itself_not_by_its_internals(): void
+        {
+            // After InlineServiceDefinitionsPass a private facade used once is an inline Definition carrying its own
+            // dependencies: those belong to Alpha, the consumer only asked for Alpha\Contract\Greeter.
+            $container = new ContainerBuilder();
+            $facade = (new Definition(GreeterImpl::class))->setArguments([new Reference(InternalHelper::class)]);
+            $container->setDefinition(InternalHelper::class, new Definition(InternalHelper::class));
+            $container->setDefinition(WellBehaved::class, (new Definition(WellBehaved::class))->setArguments([$facade]));
+
+            $this->process($container);
+
+            $this->addToAssertionCount(1);
+        }
+
+        public function test_an_inlined_internal_service_of_another_module_still_fails_the_build(): void
+        {
+            $container = new ContainerBuilder();
+            $container->setDefinition(Sneaky::class, (new Definition(Sneaky::class))->setArguments([new Definition(InternalHelper::class)]));
+
+            $this->expectException(\LogicException::class);
+            $this->expectExceptionMessageMatches('/Module boundary violation.*Sneaky.*InternalHelper/s');
+
+            $this->process($container);
+        }
+
         public function test_the_boundary_cannot_be_bypassed_with_an_iterator_or_locator(): void
         {
             $container = new ContainerBuilder();

@@ -24,6 +24,9 @@ use Symfony\Component\DependencyInjection\Reference;
  *    plugin registry of A such as check-in rules contributed by other modules).
  *
  * Everything else, notably handing a service of another module over in `services.php`, is a boundary violation.
+ *
+ * A service the container inlined (a private service used once) is judged as the injected service itself, and its
+ * own dependencies are checked for its own module: the internals of B's facade are B's business, not A's.
  */
 final readonly class ModuleBoundaryPass implements CompilerPassInterface
 {
@@ -40,33 +43,42 @@ final readonly class ModuleBoundaryPass implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         foreach ($container->getDefinitions() as $id => $definition) {
-            $class = $this->classOf($container, $definition);
-            if (null === $class || null === ($from = $this->modules->name($class))) {
+            $this->check($container, $id, $definition);
+        }
+    }
+
+    private function check(ContainerBuilder $container, string $id, Definition $definition): void
+    {
+        $class = $this->classOf($container, $definition);
+        $from = null === $class ? null : $this->modules->name($class);
+
+        foreach ($this->injections($definition, $class) as [$injected, $declaredType]) {
+            if ($injected instanceof Definition) {
+                $this->check($container, $id.' (inlined argument)', $injected);
+                $reference = $target = $this->classOf($container, $injected);
+            } else {
+                $reference = $injected;
+                $target = $this->targetClass($container, $injected);
+            }
+            if (null === $from || null === $class || null === $reference || null === $target) {
                 continue;
             }
 
-            foreach ($this->injections($definition, $class) as [$reference, $declaredType]) {
-                $target = $this->targetClass($container, $reference);
-                if (null === $target) {
-                    continue;
-                }
-
-                $to = $this->modules->name($target);
-                if (null === $to || $to === $from || $this->isAllowed($from, $to, $reference, $target, $declaredType)) {
-                    continue;
-                }
-
-                throw new \LogicException(\sprintf(
-                    'Module boundary violation: service "%s" (module %s, class %s) depends on "%s" (module %s, class %s). Use %s\\Contract instead.',
-                    $id,
-                    $from,
-                    $class,
-                    $reference,
-                    $to,
-                    $target,
-                    'Eventor\\'.$to,
-                ));
+            $to = $this->modules->name($target);
+            if (null === $to || $to === $from || $this->isAllowed($from, $to, $reference, $target, $declaredType)) {
+                continue;
             }
+
+            throw new \LogicException(\sprintf(
+                'Module boundary violation: service "%s" (module %s, class %s) depends on "%s" (module %s, class %s). Use %s\\Contract instead.',
+                $id,
+                $from,
+                $class,
+                $reference,
+                $to,
+                $target,
+                'Eventor\\'.$to,
+            ));
         }
     }
 
@@ -114,14 +126,14 @@ final readonly class ModuleBoundaryPass implements CompilerPassInterface
     }
 
     /**
-     * @return list<array{string, string|null}> [referenced service id, class named by the constructor parameter or null]
+     * @return list<array{string|Definition, string|null}> [referenced service id or inlined definition, class named by the constructor parameter or null]
      */
-    private function injections(Definition $definition, string $class): array
+    private function injections(Definition $definition, ?string $class): array
     {
         $found = [];
 
         $parameters = [];
-        if (class_exists($class) && method_exists($class, '__construct')) {
+        if (null !== $class && class_exists($class) && method_exists($class, '__construct')) {
             $parameters = (new \ReflectionMethod($class, '__construct'))->getParameters();
         }
 
@@ -129,18 +141,19 @@ final readonly class ModuleBoundaryPass implements CompilerPassInterface
             $declared = null;
             $parameter = \is_int($key) ? ($parameters[$key] ?? null) : $this->parameterByName($parameters, ltrim($key, '$'));
             $type = $parameter?->getType();
-            if ($argument instanceof Reference && $type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+            $direct = $argument instanceof Reference || $argument instanceof Definition;
+            if ($direct && $type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $declared = $type->getName();
             }
 
-            foreach ($this->collect($argument) as $reference) {
-                $found[] = [$reference, $argument instanceof Reference ? $declared : null];
+            foreach ($this->collect($argument) as $injected) {
+                $found[] = [$injected, $direct ? $declared : null];
             }
         }
 
         foreach ([$definition->getProperties(), $definition->getMethodCalls(), $definition->getFactory(), $definition->getConfigurator()] as $other) {
-            foreach ($this->collect($other) as $reference) {
-                $found[] = [$reference, null];
+            foreach ($this->collect($other) as $injected) {
+                $found[] = [$injected, null];
             }
         }
 
@@ -162,7 +175,9 @@ final readonly class ModuleBoundaryPass implements CompilerPassInterface
     }
 
     /**
-     * @return list<string>
+     * References and inlined definitions; an inlined definition is not descended into here (see check()).
+     *
+     * @return list<string|Definition>
      */
     private function collect(mixed $value): array
     {
@@ -170,7 +185,7 @@ final readonly class ModuleBoundaryPass implements CompilerPassInterface
             return [(string) $value];
         }
         if ($value instanceof Definition) {
-            return [...$this->collect($value->getArguments()), ...$this->collect($value->getFactory())];
+            return [$value];
         }
         if ($value instanceof ArgumentInterface) {
             return $this->collect($value->getValues());

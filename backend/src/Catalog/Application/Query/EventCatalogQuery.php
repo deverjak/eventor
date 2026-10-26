@@ -53,6 +53,11 @@ final readonly class EventCatalogQuery implements EventCatalog
         return $this->resolveSlugIn($organizer, $eventSlug, ['published', 'completed', 'cancelled']);
     }
 
+    public function resolveArchivedSlug(OrganizerId $organizer, string $eventSlug): EventId
+    {
+        return $this->resolveSlugIn($organizer, $eventSlug, ['completed', 'archived']);
+    }
+
     /**
      * The form and the availability are public only while the event is published.
      *

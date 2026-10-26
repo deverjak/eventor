@@ -24,6 +24,13 @@ interface EventCatalog
     public function resolvePublishedSlug(OrganizerId $organizer, string $eventSlug): EventId;
 
     /**
+     * Resolves the slug of a public archive URL (POST-07) to a completed or archived event.
+     *
+     * @throws EventNotFound when the slug is unknown, belongs to another organizer or the event is not finished
+     */
+    public function resolveArchivedSlug(OrganizerId $organizer, string $eventSlug): EventId;
+
+    /**
      * @throws EventNotFound when the event is unknown or has not been published
      */
     public function registrationSnapshot(OrganizerId $organizer, EventId $event): PublishedEventSnapshot;

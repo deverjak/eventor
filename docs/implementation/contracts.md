@@ -465,6 +465,24 @@ None (see "Decisions").
 
 ---
 
+## Contract changes after W1 (state 26. 10. 2026)
+
+Additive changes made while the modules were implemented; the code is the source of truth.
+
+| Module | Change | Why |
+|---|---|---|
+| Catalog | `EventCatalog::resolveArchivedSlug()` resolves a slug of a completed or archived event; `resolvePublishedSlug()` accepts published, completed and cancelled events only (no drafts, no archive) | POST-07 public archive; review finding (no data of archived events on the live page) |
+| Identity | `RequiresPermission::$scopedAllowed`; voter subjects `Security\EventPermissionSubject` and `Security\OrganizerWidePermissionSubject` | ORG-03 event scope enforced centrally |
+| Legal | `RegistrationSlot::$minor`; `RequirementNotSatisfied` implements `ProvidesViolations` | S13 guardians; 422 field list |
+| Registration | `CancellationReason` enum; `ParticipationCancelled::$reason` is that code, never free text | no personal data in integration events |
+| Registration | `InvalidOrderRequest`, `SelfServiceTokenRejected` (`token_invalid`) moved to `Contract/Exception` | deptrac: UserInterface may not read Domain |
+| Payments | `InvalidBankAccount` | Pairrot onboarding validation |
+| Communication | `CampaignAudience::$checkedIn` (null = any) | POST-05 closing message to checked-in participants |
+| Communication | `TemplateKey`, `MessageLocale`, `CampaignAudienceSpec`, `CampaignPurpose`, `CampaignState`, `DeliveryState`, `SuppressionScope` in `Contract` | deptrac: UserInterface may not read Domain |
+| Attention | `AttentionState::Assigned` renamed `Acknowledged`; `AttentionItemView` gained acknowledgement and resolution fields | workflow open → acknowledged → resolved / dismissed |
+| Content | `content.photo_uploaded` is consumed by Content itself (thumbnail); `CollectionNotFound` also covers "not visible to this audience" | POST-01 |
+| Shared | `MaterialId` (Doctrine type `material_id`); `ProvidesViolations` | Content materials; problem details with `violations` |
+
 ## Decisions where the book is ambiguous or contradicts itself
 
 | # | Topic | Chosen | Why |

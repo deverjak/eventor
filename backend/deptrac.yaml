@@ -362,6 +362,7 @@ deptrac:
       - Content.Contract
       - Shared
       - Catalog.Contract
+      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
     Content.Infrastructure:
@@ -370,6 +371,7 @@ deptrac:
       - Content.Contract
       - Shared
       - Catalog.Contract
+      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
     Content.UserInterface:
@@ -377,6 +379,7 @@ deptrac:
       - Content.Contract
       - Shared
       - Catalog.Contract
+      - Communication.Contract
       - Identity.Contract
       - Legal.Contract
     Content.Contract:

@@ -81,4 +81,8 @@ return [
     'problem.unmatched_transaction_not_found.title' => 'Unmatched transaction not found',
     'problem.allocation_not_possible.title' => 'Payment cannot be allocated',
     'problem.refund_exceeds_balance.title' => 'Refund exceeds the refundable balance',
+    'problem.collection_is_external.title' => 'An external collection takes no photos',
+    'problem.material_not_found.title' => 'Material not found',
+    'problem.photo_not_found.title' => 'Photo not found',
+    'problem.invalid_photo.title' => 'Invalid photo',
 ];

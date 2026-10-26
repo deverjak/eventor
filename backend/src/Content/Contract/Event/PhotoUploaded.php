@@ -8,7 +8,6 @@ use Eventor\Shared\Domain\Id\CollectionId;
 use Eventor\Shared\Domain\Id\OrganizerId;
 use Eventor\Shared\Domain\Id\PhotoId;
 use Eventor\Shared\Domain\Messaging\IntegrationEvent;
-use Eventor\Shared\Domain\Messaging\PendingSubscribers;
 
 /**
  * The upload of a photo was confirmed (POST-01); thumbnails are generated asynchronously.
@@ -17,7 +16,6 @@ use Eventor\Shared\Domain\Messaging\PendingSubscribers;
  * No personal data: ids, amounts, states and times only (chapter 06, catalogue).
  */
 #[IntegrationEvent(name: 'content.photo_uploaded', version: 1)]
-#[PendingSubscribers('content')]
 final readonly class PhotoUploaded
 {
     public function __construct(

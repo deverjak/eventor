@@ -56,6 +56,7 @@ return [
         'Identity' => 'Permission attributes',
         'Catalog' => 'EventCatalog (collection of an event)',
         'Legal' => 'ConsentQuery (likeness consents of a gallery)',
+        'Communication' => 'CampaignComposer (POST-05 closing message)',
     ],
     'Privacy' => [
         'Identity' => 'Permission attributes',

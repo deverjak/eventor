@@ -45,6 +45,7 @@ final class SharedIdTypes
             PaymentRequestIdType::NAME => PaymentRequestIdType::class,
             PersonIdType::NAME => PersonIdType::class,
             PhotoIdType::NAME => PhotoIdType::class,
+            MaterialIdType::NAME => MaterialIdType::class,
             ProgramItemIdType::NAME => ProgramItemIdType::class,
             RefundTaskIdType::NAME => RefundTaskIdType::class,
             SelfServiceTokenIdType::NAME => SelfServiceTokenIdType::class,

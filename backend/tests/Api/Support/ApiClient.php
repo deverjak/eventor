@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Eventor\Tests\Api\Support;
 
+use Symfony\Component\Mime\Part\DataPart;
+use Symfony\Component\Mime\Part\Multipart\FormDataPart;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -66,6 +68,27 @@ final class ApiClient
     public function post(string $path, array $json = [], array $headers = [], bool $csrf = true): ApiResponse
     {
         return $this->request('POST', $path, $json, $headers, $csrf);
+    }
+
+    /**
+     * A multipart upload like a browser form: the file field plus text fields.
+     *
+     * @param array<string, string> $fields
+     */
+    public function upload(string $path, string $field, string $fileName, string $bytes, string $contentType, array $fields = []): ApiResponse
+    {
+        $form = new FormDataPart($fields + [$field => new DataPart($bytes, $fileName, $contentType)]);
+        $headers = ['Accept: application/json', 'csrf-token: '.bin2hex(random_bytes(16)), ...$form->getPreparedHeaders()->toArray()];
+        if ([] !== $this->cookies) {
+            $headers[] = 'Cookie: '.implode('; ', array_map(static fn(string $name, string $value): string => "$name=$value", array_keys($this->cookies), $this->cookies));
+        }
+
+        $response = $this->http->request('POST', rtrim($this->baseUrl, '/').$path, ['headers' => $headers, 'body' => $form->bodyToIterable(), 'max_redirects' => 0, 'timeout' => 15]);
+        /** @var array<string, list<string>> $responseHeaders */
+        $responseHeaders = $response->getHeaders(false);
+        $this->rememberCookies($responseHeaders['set-cookie'] ?? []);
+
+        return new ApiResponse($response->getStatusCode(), $responseHeaders, $response->getContent(false));
     }
 
     public function hasSession(): bool

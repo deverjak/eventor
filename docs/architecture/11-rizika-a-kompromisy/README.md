@@ -69,7 +69,7 @@ Main-panel (NaLekci) prošel cestou k modulárnímu monolitu zpětně. Jeho kapi
 | tajemství porovnávané `===`, fallback na jiný klíč | `hash_equals` všude, žádné fallbacky klíčů, tajemství ve Symfony Secrets |
 | dokumentace se rozcházela s kódem | definice hotového zahrnuje knihu; workflow dump a check-links v CI |
 
-## Odchylky implementace od návrhu (W0–W2)
+## Odchylky implementace od návrhu (W0–W4)
 
 Platí stav ověřený ve zdrojovém kódu 25. 10. 2026; „důvod“ popisuje implementační kompromis, nikoli nové ADR rozhodnutí.
 
@@ -146,3 +146,24 @@ Platí stav ověřený ve zdrojovém kódu 25. 10. 2026; „důvod“ popisuje i
 | W2 (review) | veřejná stránka každé nekoncepční akce | detail jen pro `published`, `completed`, `cancelled`; formulář a dostupnost jen pro `published`; archiv je samostatná projekce (POST-07) | zrušení musí zůstat vidět účastníkům, osobní a provozní data archivu ne |
 | W3 (review) | e-mail odejde právě jednou | doručení je *aspoň jednou*: SMTP odeslání proběhne před uložením `sent`; pád mezi nimi znamená po redelivery druhý e-mail | přijaté riziko: SMTP nemá idempotenci; hlavička `X-Eventor-Delivery` umožní duplicitu dohledat; přesně jednou by vyžadovalo poskytovatele s idempotenčním klíčem |
 | W3 (review) | cizí klíče napříč schématy s `ON DELETE RESTRICT` | Registration, Communication a Payments drží id cizích modulů zatím bez FK | doplní souhrnná migrace ve W4, až existují všechny odkazované tabulky |
+| W3 Registration | tabulka objednávek `order` | `registration.orders` | `order` je v SQL rezervované slovo; citovaný název rozbíjel surové SQL a kontrolu mapování |
+| W3 Registration | samoobslužný token náhodný | tajemství odvozené HMAC z id tokenu, ukládá se jen SHA-256; jediný chybový kód `token_invalid` | `SelfServiceLinks::urlFor()` umí odkaz sestavit znovu bez uloženého tajemství (rozhodnutí 10 kontraktů) |
+| W3 Registration | honeypot vrací falešný úspěch | honeypot vrací 422 `spam_suspected`; formulářový token se kontroluje jen, když přijde | jednodušší chování pro frontend; ochranu nese rate limit |
+| W3 Registration | — | obnova samoobslužného odkazu vrací vždy 202, i po překročení limitu | žádné vyčíslování e-mailů (nález review) |
+| W3 Registration | S15 přepne účasti do `requires_attention` | nastaví `legal_state = reconfirmation_required`, stav účasti zůstává | potvrzení je právní stav, ne stav životního cyklu (kniha, kap. 05) |
+| W3 Registration | — | automatické obnovení po pozdní platbě obnoví buď všechny propadlé účasti objednávky, nebo žádnou; každá účast se vrací do kapacity atomicky (savepoint) | žádné částečně zabrané kapacity (nález review) |
+| W3 Registration | `participation_cancelled` nese důvod | nese uzavřený kód `CancellationReason`, volný text zůstává v Registration | volný text může obsahovat zdravotní údaje (nález review) |
+| W3 Registration | — | cizí klíče migrace jsou `DEFERRABLE` | alokátor zapisuje nároky na kapacitu před flushem ORM |
+| W3 Communication | potvrzení objednávky a platební údaje zvlášť | objednávka převodem dostane jedno potvrzení až s `payment_request_issued` (platební údaje a QR); `order_placed` posílá potvrzení jen hotovosti a zdarma | jeden e-mail místo dvou, platební údaje jsou v něm vždy |
+| W3 Communication | upomínky platby řídí Payments | upomínky (PAY-09) i připomínky před akcí plánuje Communication z událostí a odesílá jeden minutový sweeper; offsety −72 h a −24 h před splatností, 24 h před aktivitou | stav platby se před odesláním znovu ověří; žádná upomínka po úhradě |
+| W3 Communication | — | kampaně jsou celoorganizátorské, člen omezený na akce dostane 403; odebrání šablony nebo potlačení se neaudituje | jednodušší první verze |
+| W3 Communication | — | `CampaignAudience` nese `checkedIn` | závěrečná zpráva jen odbaveným (POST-05) |
+| W3 CheckIn | QR token podepisuje CheckIn | podpis i verzi QR drží Registration (`ParticipationQrTokens`), CheckIn ho jen ověřuje | token vydává ten, kdo vlastní účast |
+| W3 CheckIn | CheckIn odebírá zrušení, potvrzení a změnu varianty | neodebírá; autoritou je živá fasáda Registration v okamžiku odbavení | žádná zastaralá projekce na bráně |
+| W3 CheckIn | — | jedno platné odbavení na účast a seznam: částečný unikátní index + advisory lock; zrušení a oprava jsou nové řádky (append-only), zrušení vyžaduje `voided_at`, `voided_by` a `void_reason` současně | souběh S10 a dohledatelnost |
+| W3 Shared | `ModuleBoundaryPass` | inlinovaná služba se posuzuje jako vstříknutá služba podle deklarovaného typu, její závislosti zvlášť za její modul | vnitřnosti cizí fasády nepatří konzumentovi |
+| W3 Payments | — | platební údaje odvodí číslo účtu z českého IBAN, když ho Pairrot nepošle | Pairrot může oznámit jen IBAN |
+| W4 Content | galerie i k nezveřejněné akci | kolekce a materiály jen u zveřejněné (nebo pozdější) akce | koncept nemá galerii; fasáda Catalogu drafty nevrací |
+| W4 Content | podepsané, časově omezené URL fotek | fotky vydává endpoint `/api/public/content/photos/{id}` s kontrolou zveřejnění; fotka kolekce „jen přes odkaz“ potřebuje `?token=` a nesmí do sdílené cache | bez dalšího tajemství; UUID v7 a token stačí |
+| W4 Content | náhledy přes transport `async` | náhled vzniká z odběru vlastní události `content.photo_uploaded` (worker, GD, 480 px) | transport `content_events` je asynchronní stejně; odpovídá plánovanému odběrateli v katalogu |
+| W4 Content | — | veřejný archiv (POST-07) ukazuje jen zveřejněné položky označené `in_archive` u dokončené nebo archivované akce (`EventCatalog::resolveArchivedSlug`); viditelnost „jen registrovaní“ (POST-03) je P1 | archiv bez osobních údajů |

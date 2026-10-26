@@ -63,6 +63,7 @@ final readonly class CampaignComposerQuery implements CampaignComposer
             $activities,
             array_map(static fn($id): string => $id->toString(), $audience->variantIds),
             $audience->activeOnly ? [] : array_map(static fn(ParticipationState $state): string => $state->value, ParticipationState::cases()),
+            checkedIn: $audience->checkedIn,
         );
     }
 }

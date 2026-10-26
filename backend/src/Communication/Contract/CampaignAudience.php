@@ -23,5 +23,7 @@ final readonly class CampaignAudience
         public array $activityIds,
         public array $variantIds,
         public bool $activeOnly,
+        /** true = only checked-in participants (e.g. the closing message, POST-05), false = only those not checked in */
+        public ?bool $checkedIn = null,
     ) {}
 }

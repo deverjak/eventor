@@ -83,4 +83,8 @@ return [
     'problem.unmatched_transaction_not_found.title' => 'Nespárovaná platba nenalezena',
     'problem.allocation_not_possible.title' => 'Platbu nelze přiřadit',
     'problem.refund_exceeds_balance.title' => 'Částka převyšuje, co lze vrátit',
+    'problem.collection_is_external.title' => 'Externí kolekce nepřijímá fotografie',
+    'problem.material_not_found.title' => 'Materiál nenalezen',
+    'problem.photo_not_found.title' => 'Fotografie nenalezena',
+    'problem.invalid_photo.title' => 'Neplatná fotografie',
 ];

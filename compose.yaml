@@ -119,6 +119,18 @@ services:
 
   php:
     <<: *backend
+    # Windows bind mounts make Symfony's debug resource scans expensive. Warm the cache
+    # outside the HTTP execution limit, then retain the kernel between requests.
+    # After backend code edits: docker compose restart php (config/cache changes: backend/README.md).
+    environment:
+      <<: *backend-env
+      APP_DEBUG: "0"
+    command:
+      - sh
+      - -ec
+      - |
+        php bin/console cache:warmup --no-debug
+        exec frankenphp run --config /etc/caddy/Caddyfile.worker --adapter caddyfile
     ports:
       - "8080:80"
     volumes:
@@ -126,12 +138,13 @@ services:
       - vendor:/app/vendor
       - var-php:/app/var
       - ./docker/php/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/php/Caddyfile.worker:/etc/caddy/Caddyfile.worker:ro
     healthcheck:
       test: ["CMD", "php", "-r", "exit(false === @file_get_contents('http://127.0.0.1/api/health/live') ? 1 : 0);"]
-      interval: 3s
-      timeout: 3s
+      interval: 10s
+      timeout: 5s
       retries: 40
-      start_period: 5s
+      start_period: 120s
 
   worker:
     <<: *backend

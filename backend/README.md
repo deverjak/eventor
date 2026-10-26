@@ -19,7 +19,7 @@ docker compose exec php bin/console eventor:identity:create-owner \
 
 | Service | Host port | Purpose |
 |---|---|---|
-| `php` | 8080 | dev API, FrankenPHP **classic** mode: every request boots a fresh kernel, code edits apply at once |
+| `php` | 8080 | dev API, FrankenPHP **worker** mode with `APP_DEBUG=0`: warms the cache on startup and retains the kernel; restart after backend code edits |
 | `worker` | - | `messenger:consume --all --exclude-receivers=failed` (all `<module>_events` transports, `async`, scheduler) |
 | `php-api` / `worker-api` | 8081 | same image, database `eventor_api`, FrankenPHP **worker** mode: target of the black-box API tests. Needs `docker compose restart php-api worker-api` after code edits (`bin/api-test` does it) |
 | `postgres` | 5434 (`POSTGRES_HOST_PORT`) | roles `eventor_owner` (migrations), `eventor_app` (application), databases `eventor`, `eventor_api`, `pairrot`, `eventor_test_<token>` |
@@ -30,6 +30,8 @@ docker compose exec php bin/console eventor:identity:create-owner \
 * **Port clash** (e.g. 5434 taken): create the git-ignored `compose.override.yaml`, e.g. `services: { postgres: { ports: !override ["5435:5432"] } }`.
 * **Fresh database roles** (`docker compose down -v && docker compose up -d`) re-run `docker/postgres/10-init.sh`.
 * `vendor/` and `var/` live in **named Docker volumes** (fast on Windows). `backend/vendor` on the host is empty and irrelevant.
+* The dev API skips Symfony debug resource scans over the bind-mounted source (particularly expensive on Windows). After backend code edits run `docker compose restart php`; restart `worker` too when changing background handlers. After changing routes, service definitions or configuration, first run `docker compose exec php bin/console cache:clear --no-debug`, then restart `php`. The database stays `eventor` (the separate `php-api` test stack uses `eventor_api`). Initial cache warmup can take several minutes on Windows.
+* For full Symfony debug checks and immediate code reloads, temporarily override `php.environment.APP_DEBUG` to `"1"` and `php.command` to `["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]` in `compose.override.yaml`, then run `docker compose up -d --no-deps php`. This mode can be much slower on Windows bind mounts.
 * Only the coordinator runs `composer require`: `docker compose run --rm --no-deps php composer require …`.
 
 Everyday commands:

@@ -47,6 +47,22 @@ x-api-env: &api-env
   DATABASE_MIGRATIONS_URL: postgresql://eventor_owner:eventor_owner@postgres:5432/eventor_api?serverVersion=17&charset=utf8
 
 services:
+  frontend:
+    image: node:24-bookworm-slim
+    working_dir: /app
+    restart: unless-stopped
+    command: ["sh", "-c", "npm ci && npm run dev"]
+    environment:
+      BACKEND_ORIGIN: http://php
+      OPENAPI_URL: http://php/api/doc.json
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next:/app/.next
+
   postgres:
     image: postgres:17
     restart: unless-stopped
@@ -195,6 +211,8 @@ services:
       - "8090:8080"
 
 volumes:
+  frontend-node-modules:
+  frontend-next:
   pgdata:
   miniodata:
   vendor:

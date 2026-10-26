@@ -1,0 +1,13 @@
+# Backend integration
+
+`client.ts` is a browser-side same-origin client. The Next.js `/api/*` rewrite forwards to Symfony. Team authentication uses the backend session cookie; no session token is persisted in browser storage. Unsafe `/api/auth/*` and `/api/admin/*` requests send a fresh random `csrf-token`, as required by `CsrfGuardListener`. Reads accept an AbortSignal where used by the application. Writes are never retried automatically. Pass a stable `idempotencyKey` when explicitly retrying the same idempotent command.
+
+The current hand-reviewed wire types in `types.ts` come from controllers, request DTOs and query views in `backend/src`. They are intentionally separate from generated types. Monetary amounts stay in integer minor units. Event editing forwards the backend version in `If-Match`; business validation, permissions and state transitions belong to Symfony.
+
+Available wrappers cover authentication, organizer profile, event list/detail/create/update/publication/registration state, capacity buckets, attention queue and summary, legal document list, team member list, unmatched payments, refunds and Pairrot connection status. Error responses preserve backend `code`, `violations`, `nextSteps` and `correlationId` in `ApiError.problem`. A 403 must be shown as lack of permission; it is not an empty collection.
+
+Registration order management, communication campaigns, check-in operations, content and reporting remain integration points until their real HTTP contracts arrive. Do not guess routes from architecture examples. Extend the client from implemented controllers or the exported OpenAPI document.
+
+Run `npm run openapi` against a running backend (`OPENAPI_URL`, default `http://localhost:8080/api/doc.json`) to generate `schema.d.ts` with `openapi-typescript`. `npm run openapi:check` compares the export without modifying files. Generation failures preserve the previous schema. After generation, `createOpenApiClient<paths>()` accepts `paths` imported from `schema.d.ts` and uses `openapi-fetch` with the same cookie/CSRF policy. The initial bootstrap does not contain an invented generated schema. Current OpenAPI annotations describe many responses textually, so the hand-reviewed DTOs remain necessary until the backend export contains full schemas.
+
+`node --test scripts/api.test.mjs` checks cookie/CSRF handling, organizer path encoding, optimistic-lock and idempotency headers, RFC problem fields, reverse-proxy errors, network failures, aborts and rejection of external URLs. It requires Node 22.18+ or Node 24 for native TypeScript stripping.
